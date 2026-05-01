@@ -45,35 +45,61 @@ function firstUserMessage(messagesJson: string): string {
 }
 
 const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500&display=swap');
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  
   :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --surface2: #21262d;
-    --border: #30363d;
-    --text: #e6edf3;
-    --muted: #7d8590;
-    --accent: #58a6ff;
-    --green: #3fb950;
-    --orange: #d29922;
-    --red: #f85149;
-    --purple: #bc8cff;
-    --radius: 8px;
-    --mono: 'SFMono-Regular', Consolas, monospace;
+    /* Dark Mode (The Observatory) - Default */
+    --background: #050505;
+    --surface: #0A0A0A;
+    --surface-dim: #121212;
+    --surface-container: #1A1A1A;
+    --on-surface: #F2F2F2;
+    --on-surface-variant: #A1A1AA;
+    --outline: #27272A;
+    --primary: #3B82F6;
+    --secondary: #94A3B8;
+    --tertiary: #22C55E;
+    --error: #F87171;
+    --radius: 4px;
+    --font-headline: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
   }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      /* Light Mode (The Laboratory) */
+      --background: #FFFFFF;
+      --surface: #FFFFFF;
+      --surface-dim: #F5F5F5;
+      --surface-container: #FAFAFA;
+      --on-surface: #1A1A1A;
+      --on-surface-variant: #666666;
+      --outline: #E0E0E0;
+      --primary: #0052FF;
+      --secondary: #6B7280;
+      --tertiary: #10B981;
+      --error: #EF4444;
+    }
+  }
+
   body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--background);
+    color: var(--on-surface);
+    font-family: var(--font-body);
     font-size: 14px;
     line-height: 1.5;
     min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+
+  a { color: var(--primary); text-decoration: none; transition: opacity 0.2s; }
+  a:hover { opacity: 0.8; text-decoration: none; }
 
   .header {
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--outline);
     padding: 0 24px;
     display: flex;
     align-items: center;
@@ -81,276 +107,306 @@ const CSS = `
     height: 56px;
     position: sticky;
     top: 0;
-    background: var(--bg);
+    background: var(--background);
     z-index: 10;
   }
   .header-brand {
-    font-weight: 600;
-    font-size: 15px;
-    color: var(--text);
+    font-family: var(--font-headline);
+    font-weight: 500;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+    color: var(--on-surface);
     display: flex;
     align-items: center;
     gap: 8px;
+    text-transform: uppercase;
   }
-  .header-brand span { color: var(--accent); }
-  .nav { display: flex; gap: 4px; }
+  .header-brand span { color: var(--primary); }
+  
+  .nav { display: flex; gap: 8px; }
   .nav a {
-    padding: 6px 12px;
-    border-radius: var(--radius);
-    color: var(--muted);
+    padding: 4px 8px;
+    color: var(--on-surface-variant);
     font-size: 13px;
     font-weight: 500;
+    font-family: var(--font-headline);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
-  .nav a:hover { color: var(--text); background: var(--surface2); text-decoration: none; }
-  .nav a.active { color: var(--text); background: var(--surface2); }
+  .nav a:hover { color: var(--on-surface); }
+  .nav a.active { color: var(--on-surface); border-bottom: 1.5px solid var(--primary); }
 
-  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 40px 24px; }
 
   .page-title {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 24px;
-    color: var(--text);
+    font-family: var(--font-headline);
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: 32px;
+    color: var(--on-surface);
   }
 
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 16px;
-    margin-bottom: 32px;
+    margin-bottom: 40px;
   }
   .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--surface-container);
+    border: 1px solid var(--outline);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 24px;
   }
   .stat-label {
-    font-size: 12px;
-    color: var(--muted);
+    font-size: 11px;
+    color: var(--on-surface-variant);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 8px;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    font-family: var(--font-headline);
   }
   .stat-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text);
+    font-size: 32px;
+    font-weight: 500;
+    color: var(--on-surface);
     line-height: 1;
+    font-family: var(--font-headline);
+    letter-spacing: -0.02em;
   }
   .stat-sub {
     font-size: 12px;
-    color: var(--muted);
-    margin-top: 6px;
+    color: var(--on-surface-variant);
+    margin-top: 8px;
   }
 
   .charts-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 16px;
-    margin-bottom: 32px;
+    margin-bottom: 40px;
   }
   @media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
   .chart-card {
     background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--outline);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 24px;
   }
   .chart-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--on-surface-variant);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 16px;
+    letter-spacing: 0.1em;
+    margin-bottom: 24px;
+    font-family: var(--font-headline);
   }
-  canvas { max-height: 220px; }
+  canvas { max-height: 240px; }
 
   .section-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
   }
   .section-title {
-    font-size: 15px;
-    font-weight: 600;
+    font-family: var(--font-headline);
+    font-size: 16px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
-  .section-link { font-size: 13px; color: var(--accent); }
+  .section-link { font-size: 12px; color: var(--primary); font-weight: 500; }
 
   .table-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--outline);
     border-radius: var(--radius);
     overflow: hidden;
   }
   table { width: 100%; border-collapse: collapse; }
   thead th {
-    padding: 10px 16px;
+    padding: 12px 16px;
     text-align: left;
-    font-size: 12px;
-    color: var(--muted);
+    font-size: 11px;
+    color: var(--on-surface-variant);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface2);
-    white-space: nowrap;
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid var(--outline);
+    background: var(--surface-dim);
+    font-family: var(--font-headline);
   }
   tbody td {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--outline);
     vertical-align: middle;
   }
   tbody tr:last-child td { border-bottom: none; }
-  tbody tr:hover td { background: var(--surface2); }
+  tbody tr:hover td { background: var(--surface-dim); }
+  
   .empty-state {
-    padding: 48px;
+    padding: 64px;
     text-align: center;
-    color: var(--muted);
+    color: var(--on-surface-variant);
+    font-size: 14px;
+    border: 1px solid var(--outline);
+    border-radius: var(--radius);
   }
 
-  .badge {
+  .status-dot {
     display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .status-label {
     font-size: 11px;
     font-weight: 500;
-    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--on-surface-variant);
   }
-  .badge-blue { background: rgba(88,166,255,0.15); color: var(--accent); }
-  .badge-purple { background: rgba(188,140,255,0.15); color: var(--purple); }
-  .badge-green { background: rgba(63,185,80,0.15); color: var(--green); }
 
-  .mono { font-family: var(--mono); font-size: 12px; color: var(--muted); }
-  .text-muted { color: var(--muted); }
-  .text-green { color: var(--green); }
-  .text-red { color: var(--red); }
+  .mono { font-family: var(--font-mono); font-size: 13px; color: var(--on-surface-variant); }
+  .text-muted { color: var(--on-surface-variant); }
+  .text-primary { color: var(--primary); }
+  .text-tertiary { color: var(--tertiary); }
+  .text-error { color: var(--error); }
 
   .pagination {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 16px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--outline);
     font-size: 13px;
-    color: var(--muted);
+    color: var(--on-surface-variant);
+    background: var(--surface-dim);
   }
   .pagination-btns { display: flex; gap: 8px; }
+  
   .btn {
-    padding: 6px 14px;
+    padding: 8px 16px;
     border-radius: var(--radius);
-    border: 1px solid var(--border);
-    background: var(--surface2);
-    color: var(--text);
+    border: 1px solid var(--outline);
+    background: transparent;
+    color: var(--on-surface);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 500;
     text-decoration: none;
     display: inline-block;
+    transition: opacity 0.2s;
+    font-family: var(--font-headline);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
-  .btn:hover { background: var(--border); text-decoration: none; }
-  .btn:disabled, .btn.disabled { opacity: 0.4; pointer-events: none; }
+  .btn:hover { opacity: 0.7; }
+  .btn-primary {
+    background: var(--on-surface);
+    color: var(--background);
+    border-color: var(--on-surface);
+  }
+  .btn:disabled, .btn.disabled { opacity: 0.2; pointer-events: none; }
 
   /* Session detail */
   .detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
-    margin-bottom: 24px;
+    margin-bottom: 32px;
   }
   @media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
   .detail-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: var(--surface-container);
+    border: 1px solid var(--outline);
     border-radius: var(--radius);
-    padding: 20px;
+    padding: 24px;
   }
   .detail-card h3 {
-    font-size: 12px;
-    color: var(--muted);
+    font-size: 11px;
+    color: var(--on-surface-variant);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 12px;
+    letter-spacing: 0.1em;
+    margin-bottom: 20px;
+    font-family: var(--font-headline);
   }
   .detail-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
-    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+    border-bottom: 1px solid var(--outline);
     font-size: 13px;
   }
   .detail-row:last-child { border-bottom: none; }
-  .detail-key { color: var(--muted); }
+  .detail-key { color: var(--on-surface-variant); }
   .detail-val { font-weight: 500; text-align: right; word-break: break-all; max-width: 60%; }
 
   .messages-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--outline);
     border-radius: var(--radius);
     overflow: hidden;
   }
   .messages-header {
     padding: 14px 20px;
-    border-bottom: 1px solid var(--border);
-    font-size: 12px;
-    color: var(--muted);
+    border-bottom: 1px solid var(--outline);
+    font-size: 11px;
+    color: var(--on-surface-variant);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    background: var(--surface2);
+    letter-spacing: 0.1em;
+    background: var(--surface-dim);
+    font-family: var(--font-headline);
   }
-  .message-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .message-list { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
   .msg {
     display: flex;
-    gap: 10px;
+    gap: 16px;
     align-items: flex-start;
   }
   .msg-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border-radius: 0;
+    border: 1px solid var(--outline);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 500;
     flex-shrink: 0;
-    margin-top: 1px;
+    font-family: var(--font-headline);
+    background: var(--surface-dim);
   }
-  .msg-icon-user { background: rgba(88,166,255,0.2); color: var(--accent); }
-  .msg-icon-ai { background: rgba(188,140,255,0.2); color: var(--purple); }
-  .msg-icon-tool { background: rgba(63,185,80,0.15); color: var(--green); }
   .msg-body { flex: 1; min-width: 0; }
   .msg-role {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 4px;
-    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    color: var(--on-surface-variant);
+    font-family: var(--font-headline);
   }
   .msg-text {
-    font-size: 13px;
-    color: var(--text);
+    font-size: 14px;
+    color: var(--on-surface);
     white-space: pre-wrap;
     word-break: break-word;
   }
   .msg-tool {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-family: var(--mono);
-    color: var(--muted);
-  }
-  .msg-ts { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  .show-more {
-    text-align: center;
+    background: var(--surface-dim);
+    border: 1px solid var(--outline);
+    border-radius: 0;
     padding: 12px;
-    border-top: 1px solid var(--border);
-    font-size: 13px;
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--on-surface-variant);
   }
+  .msg-ts { font-size: 11px; color: var(--on-surface-variant); margin-top: 8px; }
 `;
 
 const CHART_JS = `<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>`;
@@ -441,8 +497,8 @@ export function dashboardView(
                 <a href="/sessions/${esc(s.id)}" style="font-weight:500">${esc(projectName(s.workdir))}</a>
                 ${preview ? `<div class="text-muted" style="font-size:12px;margin-top:2px">${esc(preview)}</div>` : ""}
               </td>
-              <td><span class="badge badge-purple">${esc(shortModel(s.model))}</span></td>
-              <td class="text-green">+${s.total_additions ?? 0}</td>
+              <td><span class="mono" style="font-size:11px">${esc(shortModel(s.model))}</span></td>
+              <td class="text-tertiary">+${s.total_additions ?? 0}</td>
               <td class="text-muted">${acceptanceRate(s.accepted_lines ?? 0, s.total_additions ?? 0)}</td>
               <td class="text-muted">${formatDate(s.created_at)}</td>
             </tr>`;
@@ -485,13 +541,36 @@ export function dashboardView(
 ${CHART_JS}
 <script>
 (function() {
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const colors = {
+    primary: isDark ? '#3B82F6' : '#0052FF',
+    text: isDark ? '#A1A1AA' : '#666666',
+    border: isDark ? '#27272A' : '#E0E0E0',
+    grid: isDark ? '#1A1A1A' : '#FAFAFA'
+  };
+
   const chartDefaults = {
     responsive: true,
     maintainAspectRatio: true,
-    plugins: { legend: { labels: { color: '#7d8590', font: { size: 11 } } } },
+    plugins: { 
+      legend: { 
+        display: false
+      },
+      tooltip: {
+        backgroundColor: isDark ? '#0A0A0A' : '#FFFFFF',
+        titleColor: isDark ? '#F2F2F2' : '#1A1A1A',
+        bodyColor: isDark ? '#A1A1AA' : '#666666',
+        borderColor: colors.border,
+        borderWidth: 1,
+        cornerRadius: 0,
+        titleFont: { family: 'Space Grotesk', size: 12, weight: 500 },
+        bodyFont: { family: 'Inter', size: 12 }
+      }
+    },
   };
-  Chart.defaults.color = '#7d8590';
-  Chart.defaults.borderColor = '#30363d';
+  Chart.defaults.color = colors.text;
+  Chart.defaults.borderColor = colors.border;
+  Chart.defaults.font.family = 'Inter';
 
   const activity = ${activityData};
   new Chart(document.getElementById('activityChart'), {
@@ -502,19 +581,19 @@ ${CHART_JS}
         {
           label: 'Sessions',
           data: activity.sessions,
-          borderColor: '#58a6ff',
-          backgroundColor: 'rgba(88,166,255,0.1)',
-          tension: 0.3,
-          fill: true,
+          borderColor: colors.primary,
+          borderWidth: 1.5,
+          tension: 0,
+          pointRadius: 0,
           yAxisID: 'y',
         },
         {
           label: 'AI Lines',
           data: activity.lines,
-          borderColor: '#bc8cff',
-          backgroundColor: 'rgba(188,140,255,0.1)',
-          tension: 0.3,
-          fill: true,
+          borderColor: isDark ? '#22C55E' : '#10B981',
+          borderWidth: 1.5,
+          tension: 0,
+          pointRadius: 0,
           yAxisID: 'y1',
         },
       ],
@@ -522,9 +601,9 @@ ${CHART_JS}
     options: {
       ...chartDefaults,
       scales: {
-        x: { grid: { color: '#21262d' }, ticks: { color: '#7d8590' } },
-        y: { position: 'left', grid: { color: '#21262d' }, ticks: { color: '#58a6ff' } },
-        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#bc8cff' } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+        y: { position: 'left', grid: { color: colors.grid }, ticks: { font: { size: 10 } } },
+        y1: { position: 'right', grid: { display: false }, ticks: { font: { size: 10 } } },
       },
     },
   });
@@ -537,18 +616,16 @@ ${CHART_JS}
       datasets: [{
         label: 'Sessions',
         data: proj.sessions,
-        backgroundColor: 'rgba(88,166,255,0.6)',
-        borderColor: '#58a6ff',
-        borderWidth: 1,
-        borderRadius: 4,
+        backgroundColor: colors.primary,
+        barThickness: 12,
       }],
     },
     options: {
       ...chartDefaults,
       indexAxis: 'y',
       scales: {
-        x: { grid: { color: '#21262d' }, ticks: { color: '#7d8590' } },
-        y: { grid: { color: '#21262d' }, ticks: { color: '#7d8590' } },
+        x: { grid: { color: colors.grid }, ticks: { font: { size: 10 } } },
+        y: { grid: { display: false }, ticks: { font: { size: 10 } } },
       },
     },
   });
@@ -582,14 +659,17 @@ export function sessionsView(
             const rate = acceptanceRate(s.accepted_lines ?? 0, s.total_additions ?? 0);
             return `<tr>
               <td>
-                <a href="/sessions/${esc(s.id)}">${esc(projectName(s.workdir))}</a>
+                <a href="/sessions/${esc(s.id)}" style="font-weight:500">${esc(projectName(s.workdir))}</a>
                 ${preview ? `<div class="text-muted" style="font-size:12px;margin-top:2px">${esc(preview)}</div>` : ""}
               </td>
-              <td><span class="badge badge-blue">${esc(s.tool)}</span></td>
-              <td><span class="badge badge-purple">${esc(shortModel(s.model))}</span></td>
-              <td class="text-green">+${s.total_additions ?? 0}</td>
-              <td class="text-red">-${s.total_deletions ?? 0}</td>
-              <td class="${parseFloat(rate) >= 80 ? "text-green" : "text-muted"}">${rate}</td>
+              <td><span class="mono" style="font-size:11px">${esc(s.tool)}</span></td>
+              <td><span class="mono" style="font-size:11px">${esc(shortModel(s.model))}</span></td>
+              <td class="text-tertiary">+${s.total_additions ?? 0}</td>
+              <td class="text-error">-${s.total_deletions ?? 0}</td>
+              <td>
+                <span class="status-dot" style="background:${parseFloat(rate) >= 80 ? "var(--tertiary)" : "var(--secondary)"}"></span>
+                <span class="status-label">${rate}</span>
+              </td>
               <td class="text-muted">${formatDate(s.created_at)}</td>
             </tr>`;
           })
@@ -599,8 +679,8 @@ export function sessionsView(
     <div class="pagination">
       <span>Showing ${start}–${end} of ${total} sessions</span>
       <div class="pagination-btns">
-        <a href="/sessions?page=${page - 1}" class="btn ${page <= 1 ? "disabled" : ""}">← Prev</a>
-        <a href="/sessions?page=${page + 1}" class="btn ${page >= totalPages ? "disabled" : ""}">Next →</a>
+        <a href="/sessions?page=${page - 1}" class="btn ${page <= 1 ? "disabled" : ""}">Prev</a>
+        <a href="/sessions?page=${page + 1}" class="btn ${page >= totalPages ? "disabled" : ""}">Next</a>
       </div>
     </div>`;
 
@@ -651,19 +731,25 @@ export function sessionDetailView(session: SessionDetail): string {
         <h3>Session Info</h3>
         <div class="detail-row"><span class="detail-key">Project</span><span class="detail-val">${esc(projectName(session.workdir))}</span></div>
         <div class="detail-row"><span class="detail-key">Workdir</span><span class="detail-val mono">${esc(session.workdir ?? "—")}</span></div>
-        <div class="detail-row"><span class="detail-key">Tool</span><span class="detail-val"><span class="badge badge-blue">${esc(session.tool)}</span></span></div>
-        <div class="detail-row"><span class="detail-key">Model</span><span class="detail-val"><span class="badge badge-purple">${esc(session.model)}</span></span></div>
+        <div class="detail-row"><span class="detail-key">Tool</span><span class="detail-val mono">${esc(session.tool)}</span></div>
+        <div class="detail-row"><span class="detail-key">Model</span><span class="detail-val mono">${esc(session.model)}</span></div>
         <div class="detail-row"><span class="detail-key">Author</span><span class="detail-val">${esc(session.human_author ?? "—")}</span></div>
         <div class="detail-row"><span class="detail-key">Created</span><span class="detail-val">${formatDate(session.created_at)}</span></div>
         <div class="detail-row"><span class="detail-key">Commit</span><span class="detail-val mono">${session.commit_sha ? esc(session.commit_sha.slice(0, 12)) : "—"}</span></div>
       </div>
       <div class="detail-card">
         <h3>Attribution Stats</h3>
-        <div class="detail-row"><span class="detail-key">Lines Written</span><span class="detail-val text-green">+${session.total_additions ?? 0}</span></div>
-        <div class="detail-row"><span class="detail-key">Lines Removed</span><span class="detail-val text-red">-${session.total_deletions ?? 0}</span></div>
+        <div class="detail-row"><span class="detail-key">Lines Written</span><span class="detail-val text-tertiary">+${session.total_additions ?? 0}</span></div>
+        <div class="detail-row"><span class="detail-key">Lines Removed</span><span class="detail-val text-error">-${session.total_deletions ?? 0}</span></div>
         <div class="detail-row"><span class="detail-key">Lines Accepted</span><span class="detail-val">${session.accepted_lines ?? 0}</span></div>
         <div class="detail-row"><span class="detail-key">Lines Overridden</span><span class="detail-val">${session.overridden_lines ?? 0}</span></div>
-        <div class="detail-row"><span class="detail-key">Acceptance Rate</span><span class="detail-val ${parseFloat(rate) >= 80 ? "text-green" : "text-muted"}">${rate}</span></div>
+        <div class="detail-row">
+          <span class="detail-key">Acceptance Rate</span>
+          <span class="detail-val">
+            <span class="status-dot" style="background:${parseFloat(rate) >= 80 ? "var(--tertiary)" : "var(--secondary)"}"></span>
+            <span class="status-label">${rate}</span>
+          </span>
+        </div>
       </div>
     </div>`;
 
@@ -671,9 +757,9 @@ export function sessionDetailView(session: SessionDetail): string {
     .map((m) => {
       if (m.type === "user") {
         return `<div class="msg">
-          <div class="msg-icon msg-icon-user">U</div>
+          <div class="msg-icon">U</div>
           <div class="msg-body">
-            <div class="msg-role">You</div>
+            <div class="msg-role">User</div>
             <div class="msg-text">${esc(m.text ?? "")}</div>
             ${m.timestamp ? `<div class="msg-ts">${new Date(m.timestamp).toLocaleTimeString()}</div>` : ""}
           </div>
@@ -681,7 +767,7 @@ export function sessionDetailView(session: SessionDetail): string {
       }
       if (m.type === "assistant") {
         return `<div class="msg">
-          <div class="msg-icon msg-icon-ai">AI</div>
+          <div class="msg-icon">AI</div>
           <div class="msg-body">
             <div class="msg-role">${esc(shortModel(session.model))}</div>
             <div class="msg-text">${esc(m.text ?? "")}</div>
@@ -691,7 +777,7 @@ export function sessionDetailView(session: SessionDetail): string {
       }
       if (m.type === "tool_use") {
         return `<div class="msg">
-          <div class="msg-icon msg-icon-tool">⚙</div>
+          <div class="msg-icon">⚙</div>
           <div class="msg-body">
             <div class="msg-role">Tool</div>
             <div class="msg-tool">${esc(m.name ?? "unknown")}</div>
@@ -712,8 +798,8 @@ export function sessionDetailView(session: SessionDetail): string {
       : "";
 
   const content = `
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-      <a href="/sessions" class="text-muted" style="font-size:13px">← Sessions</a>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:32px">
+      <a href="/sessions" class="text-muted" style="font-size:12px">← ALL SESSIONS</a>
       <div class="page-title" style="margin:0">${esc(projectName(session.workdir))}</div>
     </div>
     ${infoHtml}
@@ -721,6 +807,7 @@ export function sessionDetailView(session: SessionDetail): string {
 
   return layout(`Session · ${projectName(session.workdir)}`, "sessions", content);
 }
+
 
 export function notFoundView(): string {
   return layout(
