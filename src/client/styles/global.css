@@ -297,7 +297,7 @@ tbody tr:hover td { background: var(--surface-dim); }
 
 .session-item {
   display: grid;
-  grid-template-columns: 40px 1fr auto;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 16px;
   padding: 12px 0;
