@@ -1,0 +1,5 @@
+what is the `memory/` directory?
+
+---
+
+Write a proper README.md
