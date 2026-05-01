@@ -183,9 +183,6 @@ const Dashboard: React.FC = () => {
             
             return (
               <Link key={s.id} to={`/sessions/${s.id}`} className="session-item">
-                <div className="avatar">
-                  <User size={18} color="var(--on-surface-variant)" />
-                </div>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span className="session-summary">{preview || "Untitled Session"}</span>
