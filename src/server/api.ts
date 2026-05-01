@@ -248,8 +248,34 @@ api.get("/stats", async (c) => {
 });
 
 api.get("/repositories", (c) => {
-  const repos = getRepositories();
-  return c.json({ repositories: repos });
+  const legacyRepos = getRepositories();
+  const dashRepos = getDashProjectStats().map(r => ({
+    project: r.project,
+    sessions: r.sessions,
+    ai_lines: r.ai_lines,
+    accepted_lines: r.ai_lines, // Simplified
+    last_active: Math.floor(Date.now() / 1000), // Simplified
+    top_model: "claude-code"
+  }));
+  
+  // Merge by project path
+  const repoMap = new Map();
+  legacyRepos.forEach(r => repoMap.set(r.project, r));
+  dashRepos.forEach(r => {
+    const existing = repoMap.get(r.project);
+    if (existing) {
+      repoMap.set(r.project, {
+        ...existing,
+        sessions: existing.sessions + r.sessions,
+        ai_lines: existing.ai_lines + r.ai_lines,
+        accepted_lines: existing.accepted_lines + r.accepted_lines
+      });
+    } else {
+      repoMap.set(r.project, r);
+    }
+  });
+
+  return c.json({ repositories: Array.from(repoMap.values()) });
 });
 
 api.get("/sessions", async (c) => {
@@ -267,7 +293,8 @@ api.get("/sessions", async (c) => {
     return dateB - dateA;
   });
 
-  const total = getSessionCount(); // Still using git-ai count for now
+  const dashCount = dashDb.query("SELECT COUNT(*) as count FROM sessions").get() as any;
+  const total = getSessionCount() + (dashCount?.count || 0);
   
   return c.json({
     sessions,
