@@ -16,11 +16,22 @@ async function main() {
     console.log("Starting server in production mode...");
     // @ts-ignore - dynamic import of the server
     await import("../server/index.ts");
+  } else if (args[0] === "hook") {
+    const { handleHook } = await import("../server/hooks.ts");
+    await handleHook(args.slice(1));
+  } else if (args[0] === "reconcile") {
+    const { reconcileRepo } = await import("../server/reconcile.ts");
+    await reconcileRepo(process.cwd());
+  } else if (args[0] === "install") {
+    const { installHooks } = await import("../server/install.ts");
+    await installHooks();
   } else {
     console.log("Git AI Dashboard CLI");
     console.log("");
     console.log("Usage:");
-    console.log("  ai-dash --serve    Start the production server");
+    console.log("  ai-dash --serve            Start the production server");
+    console.log("  ai-dash hook <tool> <ev>   Process agent hook event (reads from stdin)");
+    console.log("  ai-dash install            Install hooks into the current project");
     process.exit(0);
   }
 }
