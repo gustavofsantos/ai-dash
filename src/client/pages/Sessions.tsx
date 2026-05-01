@@ -39,10 +39,6 @@ const Sessions: React.FC = () => {
     <>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div style={{ display: "flex", gap: 16 }}>
-          <div className="badge" style={{ padding: "4px 8px", gap: 4 }}>
-            <History size={14} />
-            main
-          </div>
           <div style={{ position: "relative" }}>
             <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--on-surface-variant)" }} />
             <input 

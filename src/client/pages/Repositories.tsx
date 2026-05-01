@@ -32,9 +32,7 @@ const Repositories: React.FC = () => {
                 <th>Repository</th>
                 <th>Sessions</th>
                 <th>AI Lines</th>
-                <th>Acceptance</th>
                 <th>Last Active</th>
-                <th>Tool / Model</th>
               </tr>
             </thead>
             <tbody>
@@ -89,45 +87,8 @@ const Repositories: React.FC = () => {
                     <td style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}>
                       {r.ai_lines.toLocaleString()}
                     </td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                        <div
-                          style={{
-                            height: 4,
-                            width: 64,
-                            background: "var(--surface-container)",
-                            borderRadius: 2,
-                            overflow: "hidden",
-                          }}
-                        >
-                          <div
-                            style={{
-                              height: "100%",
-                              width: rate === "—" ? "0%" : rate,
-                              background: "var(--primary)",
-                              borderRadius: 2,
-                            }}
-                          />
-                        </div>
-                        <span className="mono" style={{ fontSize: 12 }}>
-                          {rate}
-                        </span>
-                      </div>
-                    </td>
                     <td style={{ fontSize: 12, color: "var(--on-surface-variant)" }}>
                       {formatDate(r.last_active)}
-                    </td>
-                    <td>
-                      <span
-                        className={`badge ${isClaude ? "badge-secondary" : isGemini ? "badge-primary" : ""}`}
-                      >
-                        {isClaude ? "Claude Code" : isGemini ? "Gemini" : r.top_tool ?? "—"}
-                      </span>
-                      {r.top_model && (
-                        <span className="mono" style={{ fontSize: 11, color: "var(--on-surface-variant)", marginLeft: 8 }}>
-                          {shortModel(r.top_model)}
-                        </span>
-                      )}
                     </td>
                   </tr>
                 );

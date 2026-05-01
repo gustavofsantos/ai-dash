@@ -45,7 +45,6 @@ const Layout: React.FC = () => {
       <div className="main-content">
         <header className="header">
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--on-surface-variant)" }}>
-            <span style={{ color: "var(--on-surface)" }}>ai-dash</span>
             {pathParts.length > 0 && (
               <>
                 <ChevronRight size={14} />
@@ -54,12 +53,6 @@ const Layout: React.FC = () => {
                 </span>
               </>
             )}
-          </div>
-          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-            <button className="btn-icon">
-              <Terminal size={18} />
-            </button>
-            <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--surface-container)", border: "1px solid var(--outline)" }}></div>
           </div>
         </header>
         <main className="container">

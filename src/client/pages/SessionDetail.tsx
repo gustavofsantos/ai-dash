@@ -301,14 +301,6 @@ const SessionDetail: React.FC = () => {
 
         <aside className="detail-sidebar">
           <div className="detail-sidebar-section">
-            <div className="detail-sidebar-title">Checkpoints</div>
-            <div className="badge" style={{ width: "100%", justifyContent: "space-between", padding: "8px 12px" }}>
-              <span>All checkpoints</span>
-              <ChevronDown size={14} />
-            </div>
-          </div>
-
-          <div className="detail-sidebar-section">
             <div className="detail-sidebar-title">Filters</div>
             <div className="filter-list">
               <div className="filter-item">
@@ -332,26 +324,6 @@ const SessionDetail: React.FC = () => {
                 </div>
                 <span>{toolCallCount}</span>
               </div>
-            </div>
-          </div>
-
-          <div className="detail-sidebar-section">
-            <div className="detail-sidebar-title">View</div>
-            <div className="filter-list">
-              <div className="filter-item" style={{ color: "var(--on-surface-variant)" }}>
-                <span>Show hidden indicators</span>
-              </div>
-              <div className="filter-item" style={{ color: "var(--on-surface-variant)" }}>
-                <span>Expand all tool calls</span>
-              </div>
-              <label className="filter-item" style={{ color: "var(--on-surface-variant)", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
-                <input 
-                  type="checkbox" 
-                  checked={compactToolUses} 
-                  onChange={(e) => setCompactToolUses(e.target.checked)} 
-                />
-                <span>Compact tool uses</span>
-              </label>
             </div>
           </div>
         </aside>
