@@ -2,50 +2,90 @@
   "hooks": {
     "PostToolUse": [
       {
-        "type": "command",
-        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostToolUse"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostToolUse"
+          }
+        ]
       }
     ],
     "PreToolUse": [
       {
-        "type": "command",
-        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreToolUse"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreToolUse"
+          }
+        ]
       }
     ],
     "SessionEnd": [
       {
-        "type": "command",
-        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionEnd"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionEnd"
+          }
+        ]
       }
     ],
     "SessionStart": [
       {
-        "type": "command",
-        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionStart"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionStart"
+          }
+        ]
       }
     ],
     "Stop": [
       {
-        "type": "command",
-        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code Stop"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code Stop"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
       {
-        "type": "command",
-        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code UserPromptSubmit"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code UserPromptSubmit"
+          }
+        ]
       }
     ],
     "PreCompact": [
       {
-        "type": "command",
-        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreCompact"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreCompact"
+          }
+        ]
       }
     ],
     "PostCompact": [
       {
-        "type": "command",
-        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostCompact"
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostCompact"
+          }
+        ]
       }
     ]
   },

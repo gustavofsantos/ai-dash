@@ -50,8 +50,13 @@ export async function installHooks() {
   for (const ev of events) {
     settings.hooks[ev] = [
       {
-        "type": "command",
-        "command": `bun ${binPath} hook claude-code ${ev}`
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": `bun ${binPath} hook claude-code ${ev}`
+          }
+        ]
       }
     ];
   }
