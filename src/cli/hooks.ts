@@ -26,6 +26,11 @@ export async function handleHook(args: string[]) {
     return;
   }
 
+  if (!payload || typeof payload !== "object") {
+    console.error("Invalid hook payload: expected object");
+    return;
+  }
+
   const { session_id, cwd, hook_event_name } = payload;
   if (!session_id || !cwd) return;
 
@@ -37,12 +42,18 @@ export async function handleHook(args: string[]) {
     [repoId, cwd]
   );
 
-  // Handle Lifecycle
+  // Ensure session exists (satisfy foreign key for events)
+  dashDb.run(
+    `INSERT OR IGNORE INTO sessions (id, repo_id, agent, model, started_at, state)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [session_id, repoId, tool, payload.model || "unknown", new Date().toISOString(), "active"]
+  );
+
+  // Update session info if this is a SessionStart event
   if (hook_event_name === "SessionStart") {
     dashDb.run(
-      `INSERT OR IGNORE INTO sessions (id, repo_id, agent, model, started_at, state)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [session_id, repoId, tool, payload.model || "unknown", new Date().toISOString(), "active"]
+      "UPDATE sessions SET model = ?, agent = ? WHERE id = ?",
+      [payload.model || "unknown", tool, session_id]
     );
   }
 
