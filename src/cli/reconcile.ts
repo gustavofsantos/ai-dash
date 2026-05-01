@@ -1,4 +1,4 @@
-import { dashDb } from "./dash_db.ts";
+import { dashDb } from "../server/dash_db.ts";
 import { crypto } from "bun";
 
 export async function reconcileRepo(cwd: string) {

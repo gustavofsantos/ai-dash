@@ -1,4 +1,4 @@
-import { dashDb } from "./dash_db.ts";
+import { dashDb } from "../server/dash_db.ts";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 
