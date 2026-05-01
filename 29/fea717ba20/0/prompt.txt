@@ -1,0 +1,1 @@
+Create a PRODUCT.md file describing this product. I have two issues in the /knowledge but the overall development was done outside it. Maybe you can use the Entire agent to find data in the Entire data, and also use /ask to find info in git notes.
