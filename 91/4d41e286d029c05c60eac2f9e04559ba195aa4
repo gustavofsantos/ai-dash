@@ -1,0 +1,36 @@
+README.md
+  d063180ca54a7532 1-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "914d41e286d029c05c60eac2f9e04559ba195aa4",
+  "prompts": {
+    "1937ed35de9376bd": {
+      "agent_id": {
+        "tool": "gemini",
+        "id": "ce074cce-9516-473c-bdc1-9b98f95b799d",
+        "model": "unknown"
+      },
+      "human_author": "Gustavo Santos",
+      "messages": [],
+      "total_additions": 274,
+      "total_deletions": 187,
+      "accepted_lines": 274,
+      "overriden_lines": 0
+    },
+    "d063180ca54a7532": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ffa2bc5b-32ad-4226-b215-737c007b09c2",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Gustavo Santos",
+      "messages": [],
+      "total_additions": 65,
+      "total_deletions": 0,
+      "accepted_lines": 65,
+      "overriden_lines": 0
+    }
+  }
+}
