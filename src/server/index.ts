@@ -1,7 +1,8 @@
-import api from "./api.ts";
-import { wsHandlers, type WebSocketData } from "./ws.ts";
+import { createApp } from "./app.ts";
+import type { WebSocketData } from "./ws.ts";
 
 const PORT = parseInt(process.env.PORT ?? "3333", 10);
+const { api, websocket } = createApp();
 
 const server = Bun.serve<WebSocketData>({
   port: PORT,
@@ -37,7 +38,7 @@ const server = Bun.serve<WebSocketData>({
       return new Response(Bun.file("./dist/client/index.html"));
     });
   },
-  websocket: wsHandlers,
+  websocket: websocket,
 });
 
 console.log(`Git AI Dashboard → http://localhost:${server.port}`);

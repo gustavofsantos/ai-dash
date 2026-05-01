@@ -1,7 +1,7 @@
 import { Database } from "bun:sqlite";
 import { join } from "node:path";
 import { mkdirSync, existsSync } from "node:fs";
-import { runMigrations } from "./db/migrations.ts";
+import { runMigrations } from "./migrations.ts";
 
 const DASH_DB_DIR = join(process.env.HOME ?? "~", ".git-ai-dash");
 const DASH_DB_PATH = join(DASH_DB_DIR, "db");
