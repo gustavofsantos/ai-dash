@@ -46,10 +46,14 @@ export async function installHooks() {
 
   // Use the absolute path to the current script for the hooks
   const binPath = require("node:path").resolve(process.argv[1]);
-  const hookCmd = `bun ${binPath} hook claude-code`;
 
   for (const ev of events) {
-    settings.hooks[ev] = `${hookCmd} ${ev}`;
+    settings.hooks[ev] = [
+      {
+        "type": "command",
+        "command": `bun ${binPath} hook claude-code ${ev}`
+      }
+    ];
   }
 
   await Bun.write(settingsPath, JSON.stringify(settings, null, 2));

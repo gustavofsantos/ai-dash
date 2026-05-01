@@ -1,13 +1,53 @@
 {
   "hooks": {
-    "PostToolUse": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostToolUse",
-    "PreToolUse": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreToolUse",
-    "SessionEnd": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionEnd",
-    "SessionStart": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionStart",
-    "Stop": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code Stop",
-    "UserPromptSubmit": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code UserPromptSubmit",
-    "PreCompact": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreCompact",
-    "PostCompact": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostCompact"
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostToolUse"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreToolUse"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "type": "command",
+        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionEnd"
+      }
+    ],
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionStart"
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code Stop"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code UserPromptSubmit"
+      }
+    ],
+    "PreCompact": [
+      {
+        "type": "command",
+        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreCompact"
+      }
+    ],
+    "PostCompact": [
+      {
+        "type": "command",
+        "command": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostCompact"
+      }
+    ]
   },
   "permissions": {
     "deny": [
