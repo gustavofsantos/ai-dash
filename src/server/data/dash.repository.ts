@@ -5,7 +5,8 @@ export class DashRepository {
 
   getSessions(limit = 10) {
     return this.db.query(`
-      SELECT s.*, r.path as workdir, 
+      SELECT s.id, s.repo_id, s.agent, COALESCE(s.model, 'unknown') as model, s.started_at, s.ended_at, s.state,
+             r.path as workdir, 
              (SELECT COUNT(*) FROM events e WHERE e.session_id = s.id) as event_count
       FROM sessions s
       JOIN repos r ON s.repo_id = r.id
@@ -20,7 +21,8 @@ export class DashRepository {
 
   getSession(id: string) {
     return this.db.query(`
-      SELECT s.*, r.path as workdir
+      SELECT s.id, s.repo_id, s.agent, COALESCE(s.model, 'unknown') as model, s.started_at, s.ended_at, s.state,
+             r.path as workdir
       FROM sessions s
       JOIN repos r ON s.repo_id = r.id
       WHERE s.id = ?
@@ -80,7 +82,8 @@ export class DashRepository {
     // timestamp is unix epoch in seconds
     const dateStr = new Date(timestamp * 1000).toISOString();
     return this.db.query(`
-      SELECT s.*, r.path as workdir
+      SELECT s.id, s.repo_id, s.agent, COALESCE(s.model, 'unknown') as model, s.started_at, s.ended_at, s.state,
+             r.path as workdir
       FROM sessions s
       JOIN repos r ON s.repo_id = r.id
       WHERE s.started_at > ?
