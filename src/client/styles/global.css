@@ -362,7 +362,7 @@ tbody tr:hover td { background: var(--surface-dim); }
 
 .session-detail-layout {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: minmax(0, 1fr) 280px;
   gap: 48px;
 }
 

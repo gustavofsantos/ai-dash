@@ -26,6 +26,8 @@ import {
 const SessionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [expandedTools, setExpandedTools] = useState<Record<number, boolean>>({});
+  const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
+  const [compactToolUses, setCompactToolUses] = useState(true);
 
   const { data: session, isLoading, error } = useQuery({
     queryKey: ["sessions", id],
@@ -56,9 +58,45 @@ const SessionDetail: React.FC = () => {
     setExpandedTools(prev => ({ ...prev, [idx]: !prev[idx] }));
   };
 
+  const toggleGroup = (idx: number) => {
+    setExpandedGroups(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
   const isGemini = session.model?.toLowerCase().includes("gemini");
   const isClaude = session.model?.toLowerCase().includes("claude");
   const title = firstUserMessage(session.messages) || "Untitled Session";
+
+  const groupedMessages = [];
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i];
+    if (compactToolUses && m.type === "tool_use") {
+      const group = [{ ...m, originalIndex: i }];
+      while (i + 1 < messages.length && messages[i + 1].type === "tool_use") {
+        i++;
+        group.push({ ...messages[i], originalIndex: i });
+      }
+      groupedMessages.push({ type: "tool_use_group", items: group });
+    } else {
+      groupedMessages.push({ ...m, originalIndex: i });
+    }
+  }
+
+  function getToolSummary(name: string, input: any) {
+    let summary = "";
+    if (typeof input === "string") {
+      summary = input;
+    } else if (input) {
+      summary = input.command || input.path || input.AbsolutePath || input.TargetFile || JSON.stringify(input);
+    }
+    
+    let displayName = name;
+    if (name === "run_command" || name === "bash") displayName = "Bash";
+    else if (name === "read_file" || name === "view_file") displayName = "Read";
+    else if (name === "replace_file_content" || name === "multi_replace_file_content" || name === "write_to_file") displayName = "File edit";
+    else if (name === "agent" || name === "subagent") displayName = "Agent";
+
+    return { displayName, summary };
+  }
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -106,10 +144,10 @@ const SessionDetail: React.FC = () => {
 
       <div className="session-detail-layout">
         <div className="timeline">
-          {messages.map((m: any, i: number) => {
-            if (m.type === "user") {
+          {groupedMessages.map((gm: any, idx: number) => {
+            if (gm.type === "user") {
               return (
-                <div className="timeline-item" key={i}>
+                <div className="timeline-item" key={idx}>
                   <div className="timeline-dot">
                     <User size={18} color="var(--on-surface-variant)" />
                   </div>
@@ -117,46 +155,114 @@ const SessionDetail: React.FC = () => {
                     <div className="message-card">
                       <div className="message-header">
                         <span>User</span>
-                        <span>{m.timestamp ? new Date(m.timestamp).toLocaleTimeString() : ""}</span>
+                        <span>{gm.timestamp ? new Date(gm.timestamp).toLocaleTimeString() : ""}</span>
                       </div>
-                      <div className="message-text">{m.text}</div>
+                      <div className="message-text">{gm.text}</div>
                     </div>
                   </div>
                 </div>
               );
             }
-            if (m.type === "assistant") {
+            if (gm.type === "assistant") {
               return (
-                <div className="timeline-item" key={i}>
+                <div className="timeline-item" key={idx}>
                   <div className="timeline-dot">
                     <Bot size={18} color="var(--primary)" />
                   </div>
                   <div className="timeline-content">
-                    <div className="message-text" style={{ padding: "8px 0" }}>{m.text}</div>
+                    <div className="message-text" style={{ padding: "8px 0" }}>{gm.text}</div>
                   </div>
                 </div>
               );
             }
-            if (m.type === "tool_use") {
-              const isExpanded = expandedTools[i];
+            if (gm.type === "tool_use") {
+              const isExpanded = expandedTools[gm.originalIndex];
               return (
-                <div className="timeline-item" key={i}>
+                <div className="timeline-item" key={idx}>
                   <div className="timeline-dot" style={{ borderStyle: "dashed" }}>
                     <Settings size={16} color="var(--on-surface-variant)" />
                   </div>
                   <div className="timeline-content">
                     <div className="tool-call">
-                      <div className="tool-call-header" onClick={() => toggleTool(i)}>
+                      <div className="tool-call-header" onClick={() => toggleTool(gm.originalIndex)}>
                         {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                         <Terminal size={14} />
-                        <span>{m.name}</span>
+                        <span>{gm.name}</span>
                       </div>
                       {isExpanded && (
                         <div className="tool-call-content">
-                          <pre>{JSON.stringify(m.input, null, 2)}</pre>
+                          <pre>{JSON.stringify(gm.input, null, 2)}</pre>
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+              );
+            }
+            if (gm.type === "tool_use_group") {
+              const groupIndex = gm.items[0].originalIndex;
+              const isGroupExpanded = expandedGroups[groupIndex];
+
+              return (
+                <div className="timeline-item" key={idx}>
+                  <div className="timeline-dot" style={{ borderStyle: "dashed" }}>
+                    <Settings size={16} color="var(--on-surface-variant)" />
+                  </div>
+                  <div className="timeline-content" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    <div 
+                      onClick={() => toggleGroup(groupIndex)}
+                      style={{ 
+                        display: "flex", 
+                        alignItems: "center", 
+                        justifyContent: "space-between", 
+                        padding: "8px 12px", 
+                        background: "var(--surface)", 
+                        border: "1px solid var(--border)", 
+                        borderRadius: "6px", 
+                        cursor: "pointer",
+                        color: "var(--on-surface)",
+                        fontSize: "14px"
+                      }}
+                    >
+                      <span>{gm.items.length} tool calls</span>
+                      {isGroupExpanded ? <ChevronUp size={16} color="var(--on-surface-variant)" /> : <ChevronDown size={16} color="var(--on-surface-variant)" />}
+                    </div>
+
+                    {isGroupExpanded && (
+                      <div style={{ display: "flex", flexDirection: "column", paddingLeft: "8px" }}>
+                        {gm.items.map((m: any) => {
+                          const isExpanded = expandedTools[m.originalIndex];
+                          const { displayName, summary } = getToolSummary(m.name, m.input);
+                          return (
+                            <div key={m.originalIndex}>
+                              <div 
+                                style={{ 
+                                  display: "flex", 
+                                  alignItems: "center", 
+                                  justifyContent: "space-between", 
+                                  padding: "6px 0", 
+                                  cursor: "pointer",
+                                  fontFamily: "monospace",
+                                  fontSize: "13px"
+                                }} 
+                                onClick={() => toggleTool(m.originalIndex)}
+                              >
+                                <div style={{ display: "flex", alignItems: "center", gap: "32px", flex: 1, overflow: "hidden" }}>
+                                  <span style={{ color: m.name === "read_file" || m.name === "view_file" ? "var(--primary)" : "var(--on-surface)", minWidth: "60px" }}>{displayName}</span>
+                                  <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "var(--on-surface-variant)" }}>{summary}</span>
+                                </div>
+                                {isExpanded ? <ChevronUp size={14} color="var(--on-surface-variant)" /> : <ChevronDown size={14} color="var(--on-surface-variant)" />}
+                              </div>
+                              {isExpanded && (
+                                <div className="tool-call-content" style={{ marginTop: "8px", marginBottom: "16px" }}>
+                                  <pre>{JSON.stringify(m.input, null, 2)}</pre>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -210,6 +316,14 @@ const SessionDetail: React.FC = () => {
               <div className="filter-item" style={{ color: "var(--on-surface-variant)" }}>
                 <span>Expand all tool calls</span>
               </div>
+              <label className="filter-item" style={{ color: "var(--on-surface-variant)", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px" }}>
+                <input 
+                  type="checkbox" 
+                  checked={compactToolUses} 
+                  onChange={(e) => setCompactToolUses(e.target.checked)} 
+                />
+                <span>Compact tool uses</span>
+              </label>
             </div>
           </div>
         </aside>
