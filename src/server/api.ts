@@ -12,6 +12,7 @@ import {
 
 import { parseGeminiTranscript } from "./gemini.ts";
 import { dashDb } from "./dash_db.ts";
+import { existsSync, readFileSync } from "node:fs";
 
 const api = new Hono().basePath("/api");
 const PAGE_SIZE = 20;
@@ -45,20 +46,35 @@ function dashEventsToMessages(events: any[]): any[] {
 
   if (transcriptPath && existsSync(transcriptPath)) {
     try {
-      // The Gemini transcript parser actually handles the standard JSONL format of Claude Code
-      const fileContent = require("node:fs").readFileSync(transcriptPath, "utf8");
+      const fileContent = readFileSync(transcriptPath, "utf8");
       const lines = fileContent.split("\n").filter(l => l.trim() !== "");
       const messages: any[] = [];
       
       for (const line of lines) {
-        const p = JSON.parse(line);
-        if (p.type === "user") {
-          messages.push({ type: "user", text: p.text, timestamp: p.timestamp });
-        } else if (p.type === "assistant") {
-          messages.push({ type: "assistant", text: p.text, timestamp: p.timestamp });
-        } else if (p.type === "tool_use") {
-          messages.push({ type: "tool_use", name: p.name, input: p.input, timestamp: p.timestamp });
-        }
+        try {
+          const p = JSON.parse(line);
+          const msg = p.message;
+          if (!msg) continue;
+
+          if (msg.role === "user") {
+            const text = Array.isArray(msg.content) 
+              ? msg.content.map((c: any) => c.text || "").join("")
+              : msg.content || "";
+            if (text) {
+              messages.push({ type: "user", text, timestamp: p.timestamp });
+            }
+          } else if (msg.role === "assistant") {
+            if (Array.isArray(msg.content)) {
+              for (const block of msg.content) {
+                if (block.type === "text") {
+                  messages.push({ type: "assistant", text: block.text, timestamp: p.timestamp });
+                } else if (block.type === "tool_use") {
+                  messages.push({ type: "tool_use", name: block.name, input: block.input, timestamp: p.timestamp });
+                }
+              }
+            }
+          }
+        } catch (e) {}
       }
       if (messages.length > 0) return messages;
     } catch (e) {
