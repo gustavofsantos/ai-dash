@@ -39,8 +39,34 @@ function getDashSessions(limit = 10) {
 }
 
 function dashEventsToMessages(events: any[]): any[] {
+  // Check if we have a Stop event with a transcript_path
+  const stopEvent = events.find(e => e.type === "Stop");
+  const transcriptPath = stopEvent?.payload?.transcript_path;
+
+  if (transcriptPath && existsSync(transcriptPath)) {
+    try {
+      // The Gemini transcript parser actually handles the standard JSONL format of Claude Code
+      const fileContent = require("node:fs").readFileSync(transcriptPath, "utf8");
+      const lines = fileContent.split("\n").filter(l => l.trim() !== "");
+      const messages: any[] = [];
+      
+      for (const line of lines) {
+        const p = JSON.parse(line);
+        if (p.type === "user") {
+          messages.push({ type: "user", text: p.text, timestamp: p.timestamp });
+        } else if (p.type === "assistant") {
+          messages.push({ type: "assistant", text: p.text, timestamp: p.timestamp });
+        } else if (p.type === "tool_use") {
+          messages.push({ type: "tool_use", name: p.name, input: p.input, timestamp: p.timestamp });
+        }
+      }
+      if (messages.length > 0) return messages;
+    } catch (e) {
+      console.error("Failed to parse transcript from Stop event:", e);
+    }
+  }
+
   const messages: any[] = [];
-  
   for (const event of events) {
     const p = event.payload;
     const ts = event.ts;
@@ -55,6 +81,7 @@ function dashEventsToMessages(events: any[]): any[] {
         break;
       
       case "PreToolUse":
+        // Avoid duplicate tool uses if we already have them from a better source
         messages.push({
           type: "tool_use",
           name: p.tool_name || p.name,
@@ -64,13 +91,10 @@ function dashEventsToMessages(events: any[]): any[] {
         break;
       
       case "Stop":
-        // Usually Stop comes after assistant finishes its output
-        // If we captured any text before Stop, we could add an assistant message
-        // For now, let's look at the payload if it has the final response
-        if (p.response?.text || p.text) {
+        if (p.last_assistant_message || p.text) {
           messages.push({
             type: "assistant",
-            text: p.response?.text || p.text,
+            text: p.last_assistant_message || p.text,
             timestamp: ts
           });
         }
