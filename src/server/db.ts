@@ -106,3 +106,16 @@ export function getModelStats(): Array<{ model: string; count: number }> {
     )
     .all();
 }
+
+export function getSessionsAfter(timestamp: number): Session[] {
+  return db
+    .query<Session>(
+      `SELECT id, workdir, tool, model, external_thread_id, commit_sha,
+              human_author, total_additions, total_deletions, accepted_lines,
+              overridden_lines, created_at, updated_at, messages
+       FROM prompts
+       WHERE created_at > ?
+       ORDER BY created_at ASC`
+    )
+    .all(timestamp);
+}

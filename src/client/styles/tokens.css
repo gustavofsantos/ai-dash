@@ -1,0 +1,35 @@
+:root {
+  /* Dark Mode (The Observatory) - Default */
+  --background: #050505;
+  --surface: #0A0A0A;
+  --surface-dim: #121212;
+  --surface-container: #1A1A1A;
+  --on-surface: #F2F2F2;
+  --on-surface-variant: #A1A1AA;
+  --outline: #27272A;
+  --primary: #3B82F6;
+  --secondary: #94A3B8;
+  --tertiary: #22C55E;
+  --error: #F87171;
+  --radius: 4px;
+  --font-headline: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    /* Light Mode (The Laboratory) */
+    --background: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-dim: #F5F5F5;
+    --surface-container: #FAFAFA;
+    --on-surface: #1A1A1A;
+    --on-surface-variant: #666666;
+    --outline: #E0E0E0;
+    --primary: #0052FF;
+    --secondary: #6B7280;
+    --tertiary: #10B981;
+    --error: #EF4444;
+  }
+}
