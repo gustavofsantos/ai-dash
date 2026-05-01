@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
 import { 
   User, 
   Bot, 
@@ -185,7 +186,9 @@ const SessionDetail: React.FC = () => {
                         <span>User</span>
                         <span>{gm.timestamp ? new Date(gm.timestamp).toLocaleTimeString() : ""}</span>
                       </div>
-                      <div className="message-text">{gm.text}</div>
+                      <div className="message-text">
+                        <ReactMarkdown>{gm.text}</ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -198,7 +201,9 @@ const SessionDetail: React.FC = () => {
                     <Bot size={18} color="var(--primary)" />
                   </div>
                   <div className="timeline-content">
-                    <div className="message-text" style={{ padding: "8px 0" }}>{gm.text}</div>
+                    <div className="message-text" style={{ padding: "8px 0" }}>
+                      <ReactMarkdown>{gm.text}</ReactMarkdown>
+                    </div>
                   </div>
                 </div>
               );

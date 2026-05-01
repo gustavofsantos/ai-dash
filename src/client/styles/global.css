@@ -428,7 +428,58 @@ tbody tr:hover td { background: var(--surface-dim); }
   font-size: 14px;
   line-height: 1.6;
   color: var(--on-surface);
-  white-space: pre-wrap;
+}
+
+.message-text p {
+  margin-bottom: 12px;
+}
+
+.message-text p:last-child {
+  margin-bottom: 0;
+}
+
+.message-text pre {
+  background: var(--surface-dim);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  margin-bottom: 12px;
+  border: 1px solid var(--outline);
+}
+
+.message-text code {
+  background: var(--surface-dim);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.message-text pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.message-text ul, .message-text ol {
+  margin-left: 20px;
+  margin-bottom: 12px;
+}
+
+.message-text li {
+  margin-bottom: 4px;
+}
+
+.message-text a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.message-text h1, .message-text h2, .message-text h3, .message-text h4 {
+  margin-top: 16px;
+  margin-bottom: 12px;
+  font-family: var(--font-headline);
 }
 
 .tool-call {
