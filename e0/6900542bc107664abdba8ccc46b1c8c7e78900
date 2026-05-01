@@ -1,0 +1,29 @@
+src/cli/install.ts
+  09b963cf7363d5b4 1-93
+src/bin/ai-dash.ts
+  09b963cf7363d5b4 20,23,26
+src/cli/hooks.ts
+  09b963cf7363d5b4 1-255
+src/cli/reconcile.ts
+  09b963cf7363d5b4 1-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "e06900542bc107664abdba8ccc46b1c8c7e78900",
+  "prompts": {
+    "09b963cf7363d5b4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b31db13f-82cc-4b70-8050-0e08d49cf1b8",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Gustavo Santos",
+      "messages": [],
+      "total_additions": 424,
+      "total_deletions": 5,
+      "accepted_lines": 422,
+      "overriden_lines": 0
+    }
+  }
+}
