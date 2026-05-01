@@ -1,0 +1,39 @@
+src/server/services/hook.service.ts
+  ae95a01a12c74cd3 6,58-72,152-166
+src/client/pages/Dashboard.tsx
+  ae95a01a12c74cd3 24-31,34-36,134-237,284-296
+src/server/services/analytics.service.ts
+  ae95a01a12c74cd3 58-65
+src/server/routes/analytics.ts
+  ae95a01a12c74cd3 1-18
+src/server/data/migrations.ts
+  ae95a01a12c74cd3 95-101
+src/server/app.ts
+  ae95a01a12c74cd3 12,32
+src/server/services/session.service.ts
+  ae95a01a12c74cd3 63-74
+src/client/pages/SessionDetail.tsx
+  ae95a01a12c74cd3 276,280,290
+src/server/data/dash.repository.ts
+  ae95a01a12c74cd3 171-206
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "d339f91fe96290432b8affb4b49ae76d49654b38",
+  "prompts": {
+    "ae95a01a12c74cd3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0af442bf-3ea3-4835-8ca5-11e2b8d23d39",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Gustavo Santos",
+      "messages": [],
+      "total_additions": 171,
+      "total_deletions": 4,
+      "accepted_lines": 245,
+      "overriden_lines": 0
+    }
+  }
+}
