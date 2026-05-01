@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from 'remark-gfm'
 import {
   User,
   Bot,
@@ -324,7 +325,7 @@ const SessionDetail: React.FC = () => {
                           <span>{gm.timestamp ? new Date(gm.timestamp).toLocaleTimeString() : ""}</span>
                         </div>
                         <div className="message-text">
-                          <ReactMarkdown>{gm.text}</ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]}>{gm.text}</ReactMarkdown>
                         </div>
                       </div>
                     </div>
@@ -339,7 +340,7 @@ const SessionDetail: React.FC = () => {
                     </div>
                     <div className="timeline-content">
                       <div className="message-text" style={{ padding: "8px 0" }}>
-                        <ReactMarkdown>{gm.text}</ReactMarkdown>
+                        <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]}>{gm.text}</ReactMarkdown>
                       </div>
                     </div>
                   </div>
