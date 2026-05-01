@@ -66,6 +66,34 @@ const SessionDetail: React.FC = () => {
   const isClaude = session.model?.toLowerCase().includes("claude");
   const title = firstUserMessage(session.messages) || "Untitled Session";
 
+  let metadata: any = {};
+  try {
+    metadata = typeof session.agent_metadata === "string" 
+      ? JSON.parse(session.agent_metadata) 
+      : session.agent_metadata || {};
+  } catch {
+    // leave empty
+  }
+
+  const promptCount = messages.filter(m => m.type === "user").length;
+  const responseCount = messages.filter(m => m.type === "assistant").length;
+  const toolCallCount = messages.filter(m => m.type === "tool_use").length;
+
+  const timeAgo = (ts: number) => {
+    const diff = Math.floor(Date.now() / 1000 - ts);
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  };
+
+  const formatDuration = (start: number, end: number) => {
+    const diff = end - start;
+    if (diff <= 0) return "0s";
+    if (diff < 60) return `${diff}s`;
+    return `${Math.floor(diff / 60)}min`;
+  };
+
   const groupedMessages = [];
   for (let i = 0; i < messages.length; i++) {
     const m = messages[i];
@@ -111,23 +139,23 @@ const SessionDetail: React.FC = () => {
           </div>
           <div className="meta-item">
             <User size={14} />
-            {session.human_author || "gustavofsantos"}
+            {session.human_author || "-"}
           </div>
           <div className="meta-item">
             <Clock3 size={14} />
-            26m ago
+            {timeAgo(session.created_at)}
           </div>
           <div className="meta-item">
             <Clock size={14} />
-            13min
+            {formatDuration(session.created_at, session.updated_at)}
           </div>
           <div className="meta-item">
             <CheckCircle2 size={14} />
-            1 Checkpoint
+            {metadata.checkpoints ? `${metadata.checkpoints} Checkpoint${metadata.checkpoints !== 1 ? "s" : ""}` : "-"}
           </div>
           <div className="meta-item">
             <FileCode size={14} />
-            1 file
+            {metadata.files ? `${metadata.files} file${metadata.files !== 1 ? "s" : ""}` : "-"}
           </div>
           <div className="meta-item" style={{ color: "var(--tertiary)" }}>
             +{session.total_additions || 0} added
@@ -137,7 +165,7 @@ const SessionDetail: React.FC = () => {
           </div>
           <div className="meta-item">
             <Zap size={14} />
-            6.9k tokens
+            {metadata.tokens ? `${metadata.tokens} tokens` : "-"}
           </div>
         </div>
       </header>
@@ -288,21 +316,21 @@ const SessionDetail: React.FC = () => {
                   <MessageSquare size={14} color="var(--on-surface-variant)" />
                   <span>Prompts</span>
                 </div>
-                <span>2</span>
+                <span>{promptCount}</span>
               </div>
               <div className="filter-item">
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <Bot size={14} color="var(--on-surface-variant)" />
                   <span>Responses</span>
                 </div>
-                <span>7</span>
+                <span>{responseCount}</span>
               </div>
               <div className="filter-item">
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <Settings size={14} color="var(--on-surface-variant)" />
                   <span>Tool calls</span>
                 </div>
-                <span>17</span>
+                <span>{toolCallCount}</span>
               </div>
             </div>
           </div>
