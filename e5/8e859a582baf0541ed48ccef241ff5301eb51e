@@ -1,0 +1,23 @@
+src/server/data/dash.db.ts
+  fc8e2f719406a5a2 7,9-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "e58e859a582baf0541ed48ccef241ff5301eb51e",
+  "prompts": {
+    "fc8e2f719406a5a2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9b324b43-d51b-4eb9-9e09-32f621d1ca48",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Gustavo Santos",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 5,
+      "accepted_lines": 14,
+      "overriden_lines": 0
+    }
+  }
+}
