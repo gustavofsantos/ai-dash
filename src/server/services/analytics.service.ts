@@ -55,6 +55,14 @@ export class AnalyticsService {
     return this.dashRepo.getActivityByDay();
   }
 
+  getTokenUsageByDay() {
+    return this.dashRepo.getTokenUsageByDay();
+  }
+
+  getFileChangesByDay() {
+    return this.dashRepo.getFileChangesByDay();
+  }
+
   getRepositories() {
     return this.getProjectStats().map(r => ({
       project: r.project,

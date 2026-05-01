@@ -21,9 +21,19 @@ const Dashboard: React.FC = () => {
     },
   });
 
+  const { data: analyticsData } = useQuery({
+    queryKey: ["analytics"],
+    queryFn: async () => {
+      const res = await fetch("/api/analytics");
+      return res.json();
+    },
+  });
+
   const activityChartRef = useRef<HTMLCanvasElement>(null);
   const projectChartRef = useRef<HTMLCanvasElement>(null);
-  const chartInstances = useRef<{ activity?: any; project?: any }>({});
+  const tokenChartRef = useRef<HTMLCanvasElement>(null);
+  const fileChangesChartRef = useRef<HTMLCanvasElement>(null);
+  const chartInstances = useRef<{ activity?: any; project?: any; tokens?: any; fileChanges?: any }>({});
 
   useEffect(() => {
     if (!data || !activityChartRef.current || !projectChartRef.current) return;
@@ -121,6 +131,110 @@ const Dashboard: React.FC = () => {
     };
   }, [data]);
 
+  useEffect(() => {
+    if (!analyticsData || !tokenChartRef.current || !fileChangesChartRef.current) return;
+
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const colors = {
+      text: isDark ? "#A1A1AA" : "#666666",
+      border: isDark ? "#27272A" : "#E0E0E0",
+      grid: isDark ? "#1A1A1A" : "#FAFAFA",
+    };
+
+    const chartDefaults = {
+      responsive: true,
+      maintainAspectRatio: true,
+      plugins: {
+        legend: { display: true, labels: { color: colors.text, font: { size: 11 } } },
+        tooltip: {
+          backgroundColor: isDark ? "#0A0A0A" : "#FFFFFF",
+          titleColor: isDark ? "#F2F2F2" : "#1A1A1A",
+          bodyColor: isDark ? "#A1A1AA" : "#666666",
+          borderColor: colors.border,
+          borderWidth: 1,
+          cornerRadius: 0,
+          titleFont: { family: "Space Grotesk", size: 12, weight: 500 },
+          bodyFont: { family: "Inter", size: 12 },
+        },
+      },
+    };
+
+    if (chartInstances.current.tokens) chartInstances.current.tokens.destroy();
+    if (chartInstances.current.fileChanges) chartInstances.current.fileChanges.destroy();
+
+    const tokenLabels = analyticsData.tokenByDay.map((d: any) => d.date);
+    chartInstances.current.tokens = new Chart(tokenChartRef.current, {
+      type: "bar",
+      data: {
+        labels: tokenLabels,
+        datasets: [
+          {
+            label: "Input",
+            data: analyticsData.tokenByDay.map((d: any) => d.input_tokens),
+            backgroundColor: isDark ? "#3B82F6" : "#0052FF",
+            stack: "tokens",
+            barThickness: 10,
+          },
+          {
+            label: "Output",
+            data: analyticsData.tokenByDay.map((d: any) => d.output_tokens),
+            backgroundColor: isDark ? "#22C55E" : "#10B981",
+            stack: "tokens",
+            barThickness: 10,
+          },
+          {
+            label: "Cache",
+            data: analyticsData.tokenByDay.map((d: any) => d.cache_tokens),
+            backgroundColor: isDark ? "#A855F7" : "#8B5CF6",
+            stack: "tokens",
+            barThickness: 10,
+          },
+        ],
+      },
+      options: {
+        ...chartDefaults,
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { font: { size: 10 }, color: colors.text } },
+          y: { stacked: true, grid: { color: colors.grid }, ticks: { font: { size: 10 }, color: colors.text } },
+        },
+      },
+    });
+
+    const fileLabels = analyticsData.filesByDay.map((d: any) => d.date);
+    chartInstances.current.fileChanges = new Chart(fileChangesChartRef.current, {
+      type: "bar",
+      data: {
+        labels: fileLabels,
+        datasets: [
+          {
+            label: "Additions",
+            data: analyticsData.filesByDay.map((d: any) => d.additions),
+            backgroundColor: isDark ? "#22C55E" : "#10B981",
+            barThickness: 10,
+          },
+          {
+            label: "Deletions",
+            data: analyticsData.filesByDay.map((d: any) => d.deletions),
+            backgroundColor: isDark ? "#EF4444" : "#F43F5E",
+            barThickness: 10,
+          },
+        ],
+      },
+      options: {
+        ...chartDefaults,
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 }, color: colors.text } },
+          y: { grid: { color: colors.grid }, ticks: { font: { size: 10 }, color: colors.text } },
+        },
+      },
+    });
+
+    return () => {
+      if (chartInstances.current.tokens) chartInstances.current.tokens.destroy();
+      if (chartInstances.current.fileChanges) chartInstances.current.fileChanges.destroy();
+    };
+  }, [analyticsData]);
+
   if (isLoading) return <div>Loading dashboard...</div>;
   if (!data) return <div>Error loading dashboard</div>;
 
@@ -166,6 +280,19 @@ const Dashboard: React.FC = () => {
           <canvas ref={projectChartRef}></canvas>
         </div>
       </div>
+
+      {analyticsData && (analyticsData.tokenByDay.length > 0 || analyticsData.filesByDay.length > 0) && (
+        <div className="charts-grid">
+          <div className="chart-card">
+            <div className="chart-title">Token Usage Over Time</div>
+            <canvas ref={tokenChartRef}></canvas>
+          </div>
+          <div className="chart-card">
+            <div className="chart-title">File Changes Over Time</div>
+            <canvas ref={fileChangesChartRef}></canvas>
+          </div>
+        </div>
+      )}
 
       <div className="section-header">
         <div className="section-title">Recent Sessions</div>

@@ -168,6 +168,42 @@ export class DashRepository {
     );
   }
 
+  getSessionAuthor(sessionId: string) {
+    return this.db.query(`
+      SELECT c.author_name, c.author_email
+      FROM commits c
+      JOIN checkpoints cp ON cp.commit_sha = c.sha
+      JOIN checkpoint_sessions cs ON cs.checkpoint_id = cp.id
+      WHERE cs.session_id = ?
+      ORDER BY c.date DESC LIMIT 1
+    `).get(sessionId) as { author_name: string; author_email: string } | null;
+  }
+
+  getTokenUsageByDay() {
+    return this.db.query(`
+      SELECT date(started_at) as date,
+        SUM(COALESCE(json_extract(token_usage_json,'$.input_tokens'),0)) as input_tokens,
+        SUM(COALESCE(json_extract(token_usage_json,'$.output_tokens'),0)) as output_tokens,
+        SUM(COALESCE(json_extract(token_usage_json,'$.cache_creation_tokens'),0)) as cache_tokens
+      FROM sessions
+      WHERE token_usage_json IS NOT NULL
+      GROUP BY date(started_at) ORDER BY date ASC
+    `).all() as any[];
+  }
+
+  getFileChangesByDay() {
+    return this.db.query(`
+      SELECT date(s.started_at) as date,
+        SUM(COALESCE(json_extract(cp.attribution_json,'$.ai_additions'),0)) as additions,
+        SUM(COALESCE(json_extract(cp.attribution_json,'$.ai_deletions'),0)) as deletions
+      FROM sessions s
+      JOIN checkpoint_sessions cs ON cs.session_id = s.id
+      JOIN checkpoints cp ON cp.id = cs.checkpoint_id
+      WHERE cp.attribution_json IS NOT NULL
+      GROUP BY date(s.started_at) ORDER BY date ASC
+    `).all() as any[];
+  }
+
   insertCommit(commit: { sha: string, repo_id: string, message: string, author_name: string, author_email: string, date: string }) {
     return this.db.run(
       `INSERT OR IGNORE INTO commits (sha, repo_id, message, author_name, author_email, date)

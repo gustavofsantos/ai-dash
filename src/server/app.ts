@@ -9,6 +9,7 @@ import { AnalyticsService } from "./services/analytics.service.ts";
 import { createSessionRoutes } from "./routes/sessions.ts";
 import { createStatsRoutes } from "./routes/stats.ts";
 import { createRepositoryRoutes } from "./routes/repositories.ts";
+import { createAnalyticsRoutes } from "./routes/analytics.ts";
 import { WebSocketService } from "./ws.ts";
 
 export function createApp() {
@@ -28,6 +29,7 @@ export function createApp() {
   app.route("/sessions", createSessionRoutes(sessionService));
   app.route("/stats", createStatsRoutes(analyticsService, sessionService));
   app.route("/repositories", createRepositoryRoutes(analyticsService));
+  app.route("/analytics", createAnalyticsRoutes(analyticsService));
 
   return { 
     api: app, 

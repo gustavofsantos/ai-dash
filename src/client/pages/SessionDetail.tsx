@@ -273,11 +273,11 @@ const SessionDetail: React.FC = () => {
           </div>
           <div className="meta-item">
             <CheckCircle2 size={14} />
-            {metadata.checkpoints ? `${metadata.checkpoints} Checkpoint${metadata.checkpoints !== 1 ? "s" : ""}` : "-"}
+            {session.checkpoint_count ? `${session.checkpoint_count} Checkpoint${session.checkpoint_count !== 1 ? "s" : ""}` : "-"}
           </div>
           <div className="meta-item">
             <FileCode size={14} />
-            {metadata.files ? `${metadata.files} file${metadata.files !== 1 ? "s" : ""}` : "-"}
+            {changedFilesCount ? `${changedFilesCount} file${changedFilesCount !== 1 ? "s" : ""}` : "-"}
           </div>
           <div className="meta-item" style={{ color: "var(--tertiary)" }}>
             +{session.total_additions || 0} added
@@ -287,7 +287,7 @@ const SessionDetail: React.FC = () => {
           </div>
           <div className="meta-item">
             <Zap size={14} />
-            {metadata.tokens ? `${metadata.tokens} tokens` : "-"}
+            {session.total_tokens ? `${session.total_tokens.toLocaleString()} tokens` : "-"}
           </div>
         </div>
       </header>

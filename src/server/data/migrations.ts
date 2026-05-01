@@ -92,5 +92,12 @@ export function runMigrations(db: Database) {
     );
   `);
 
+  // Add token_usage_json to sessions (idempotent)
+  try {
+    db.run("ALTER TABLE sessions ADD COLUMN token_usage_json TEXT");
+  } catch (_) {
+    // Column already exists
+  }
+
   console.log("Migrations applied successfully.");
 }

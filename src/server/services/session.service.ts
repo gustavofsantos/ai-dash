@@ -60,6 +60,18 @@ export class SessionService {
     }
     session.total_additions = total_additions;
     session.total_deletions = total_deletions;
+    session.checkpoint_count = checkpoints.length;
+
+    if (session.token_usage_json) {
+      try {
+        const u = JSON.parse(session.token_usage_json);
+        session.total_tokens = (u.input_tokens || 0) + (u.output_tokens || 0)
+          + (u.cache_creation_tokens || 0) + (u.cache_read_tokens || 0);
+      } catch {}
+    }
+
+    const author = this.dashRepo.getSessionAuthor(id);
+    session.human_author = author?.author_name ?? null;
 
     return session;
   }

@@ -3,7 +3,7 @@ import { AttributionService } from "./attribution.service.ts";
 import { getRepoId } from "../utils/repoId.ts";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
-import { statSync, existsSync } from "node:fs";
+import { statSync, existsSync, readFileSync } from "node:fs";
 
 export class HookService {
   constructor(
@@ -55,10 +55,21 @@ export class HookService {
     }
 
     if (hook_event_name === "SessionEnd") {
-      this.repository.updateSession(session_id, {
-        state: "ended",
-        ended_at: new Date().toISOString()
-      });
+      const updates: Record<string, any> = { state: "ended", ended_at: new Date().toISOString() };
+
+      const sessionFilePath = join(cwd, ".git", "entire-sessions", `${session_id}.json`);
+      try {
+        if (existsSync(sessionFilePath)) {
+          const content = JSON.parse(readFileSync(sessionFilePath, "utf8"));
+          if (content.token_usage) {
+            updates.token_usage_json = JSON.stringify(content.token_usage);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to read session token usage:", e);
+      }
+
+      this.repository.updateSession(session_id, updates);
     }
   }
 
@@ -137,6 +148,21 @@ export class HookService {
       commit_sha: headSha,
       strategy: "manual"
     });
+
+    try {
+      const logLine = (await Bun.$`git -C ${cwd} log -1 --format="%an|%ae|%s"`.text()).trim();
+      const [authorName, authorEmail, message] = logLine.split("|");
+      this.repository.insertCommit({
+        sha: headSha,
+        repo_id: repoId,
+        message: message || "",
+        author_name: authorName || "",
+        author_email: authorEmail || "",
+        date: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Failed to store commit author:", e);
+    }
 
     for (const session of activeSessions) {
       const dirtyPaths = JSON.parse(session.dirty_paths_json);
