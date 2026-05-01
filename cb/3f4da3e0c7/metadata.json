@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.5.6",
+  "checkpoint_id": "cb3f4da3e0c7",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "bun.lock",
+    "package.json",
+    "src/db.ts",
+    "src/index.ts",
+    "src/views.ts",
+    "tsconfig.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/cb/3f4da3e0c7/0/metadata.json",
+      "transcript": "/cb/3f4da3e0c7/0/full.jsonl",
+      "content_hash": "/cb/3f4da3e0c7/0/content_hash.txt",
+      "prompt": "/cb/3f4da3e0c7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 42,
+    "cache_creation_tokens": 52118,
+    "cache_read_tokens": 1727094,
+    "output_tokens": 28548,
+    "api_call_count": 37
+  }
+}
