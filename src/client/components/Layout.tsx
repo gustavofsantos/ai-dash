@@ -1,26 +1,72 @@
 import React from "react";
-import { Link, NavLink, Outlet } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import { 
+  LayoutDashboard, 
+  History, 
+  GitBranch, 
+  Settings, 
+  ChevronRight,
+  Database,
+  Terminal,
+  Zap
+} from "lucide-react";
 
 const Layout: React.FC = () => {
+  const location = useLocation();
+  const pathParts = location.pathname.split("/").filter(Boolean);
+
   return (
-    <>
-      <header className="header">
-        <Link to="/" className="header-brand">
-          Git AI <span>Dashboard</span>
-        </Link>
-        <nav className="nav">
-          <NavLink to="/" end className={({ isActive }) => (isActive ? "active" : "")}>
-            Dashboard
-          </NavLink>
-          <NavLink to="/sessions" className={({ isActive }) => (isActive ? "active" : "")}>
-            Sessions
-          </NavLink>
-        </nav>
-      </header>
-      <main className="container">
-        <Outlet />
-      </main>
-    </>
+    <div className="app-layout">
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div style={{ width: 24, height: 24, background: "var(--on-surface)", borderRadius: 4 }}></div>
+          <span style={{ fontWeight: 600, fontSize: 14, letterSpacing: "-0.01em" }}>git-ai-dash</span>
+        </div>
+        <div className="sidebar-content">
+          <div className="sidebar-section">
+            <nav className="sidebar-nav">
+              <NavLink to="/" end className="sidebar-nav-item">
+                <LayoutDashboard size={18} />
+                Overview
+              </NavLink>
+              <NavLink to="/repositories" className="sidebar-nav-item">
+                <Database size={18} />
+                Repositories
+              </NavLink>
+              <NavLink to="/sessions" className="sidebar-nav-item">
+                <History size={18} />
+                Sessions
+              </NavLink>
+            </nav>
+          </div>
+        </div>
+      </aside>
+
+      <div className="main-content">
+        <header className="header">
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--on-surface-variant)" }}>
+            <span style={{ color: "var(--on-surface)" }}>ai-dash</span>
+            {pathParts.length > 0 && (
+              <>
+                <ChevronRight size={14} />
+                <span style={{ color: "var(--on-surface)", textTransform: "capitalize" }}>
+                  {pathParts[pathParts.length - 1]}
+                </span>
+              </>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+            <button className="btn-icon">
+              <Terminal size={18} />
+            </button>
+            <div style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--surface-container)", border: "1px solid var(--outline)" }}></div>
+          </div>
+        </header>
+        <main className="container">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 };
 

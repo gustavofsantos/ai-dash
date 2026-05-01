@@ -7,6 +7,7 @@ import {
   getProjectStats,
   getActivityByDay,
   getModelStats,
+  getRepositories,
 } from "./db.ts";
 
 import { parseGeminiTranscript } from "./gemini.ts";
@@ -30,6 +31,11 @@ api.get("/stats", async (c) => {
     models,
     recent,
   });
+});
+
+api.get("/repositories", (c) => {
+  const repos = getRepositories();
+  return c.json({ repositories: repos });
 });
 
 api.get("/sessions", async (c) => {

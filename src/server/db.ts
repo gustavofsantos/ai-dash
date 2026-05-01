@@ -96,6 +96,36 @@ export function getActivityByDay(): Array<{ date: string; sessions: number; line
     .all();
 }
 
+export interface RepositoryStat {
+  project: string;
+  sessions: number;
+  ai_lines: number;
+  accepted_lines: number;
+  last_active: number;
+  top_model: string;
+  top_tool: string;
+}
+
+export function getRepositories(): RepositoryStat[] {
+  return db
+    .query<RepositoryStat>(
+      `SELECT
+        COALESCE(workdir, 'unknown') as project,
+        COUNT(*) as sessions,
+        COALESCE(SUM(total_additions), 0) as ai_lines,
+        COALESCE(SUM(accepted_lines), 0) as accepted_lines,
+        MAX(created_at) as last_active,
+        (SELECT model FROM prompts p2 WHERE COALESCE(p2.workdir, 'unknown') = COALESCE(p.workdir, 'unknown')
+          GROUP BY model ORDER BY COUNT(*) DESC LIMIT 1) as top_model,
+        (SELECT tool FROM prompts p3 WHERE COALESCE(p3.workdir, 'unknown') = COALESCE(p.workdir, 'unknown')
+          GROUP BY tool ORDER BY COUNT(*) DESC LIMIT 1) as top_tool
+       FROM prompts p
+       GROUP BY workdir
+       ORDER BY last_active DESC`
+    )
+    .all();
+}
+
 export function getModelStats(): Array<{ model: string; count: number }> {
   return db
     .query<{ model: string; count: number }>(

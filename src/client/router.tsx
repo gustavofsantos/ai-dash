@@ -3,6 +3,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard.tsx";
 import Sessions from "./pages/Sessions.tsx";
 import SessionDetail from "./pages/SessionDetail.tsx";
+import Repositories from "./pages/Repositories.tsx";
 import Layout from "./components/Layout.tsx";
 
 export const router = createBrowserRouter([
@@ -13,6 +14,10 @@ export const router = createBrowserRouter([
       {
         index: true,
         element: <Dashboard />,
+      },
+      {
+        path: "repositories",
+        element: <Repositories />,
       },
       {
         path: "sessions",

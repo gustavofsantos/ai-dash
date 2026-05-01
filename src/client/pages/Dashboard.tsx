@@ -1,13 +1,13 @@
 import React, { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { User } from "lucide-react";
 import { 
   projectName, 
   shortModel, 
   formatDate, 
   acceptanceRate, 
-  firstUserMessage,
-  esc 
+  firstUserMessage 
 } from "../utils.ts";
 
 declare const Chart: any;
@@ -172,55 +172,37 @@ const Dashboard: React.FC = () => {
         <Link to="/sessions" className="section-link">View all →</Link>
       </div>
 
-      <div className="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Project / Prompt</th>
-              <th>Model</th>
-              <th>Lines</th>
-              <th>Accepted</th>
-              <th>Date</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.recent.length === 0 ? (
-              <tr>
-                <td colSpan={5}>
-                  <div className="empty-state">No sessions recorded yet.</div>
-                </td>
-              </tr>
-            ) : (
-              data.recent.map((s: any) => {
-                const preview = firstUserMessage(s.messages ?? "");
-                return (
-                  <tr key={s.id}>
-                    <td>
-                      <Link to={`/sessions/${s.id}`} style={{ fontWeight: 500 }}>
-                        {projectName(s.workdir)}
-                      </Link>
-                      {preview && (
-                        <div className="text-muted" style={{ fontSize: "12px", marginTop: "2px" }}>
-                          {preview}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <span className="mono" style={{ fontSize: "11px" }}>
-                        {shortModel(s.model)}
-                      </span>
-                    </td>
-                    <td className="text-tertiary">+{s.total_additions ?? 0}</td>
-                    <td className="text-muted">
-                      {acceptanceRate(s.accepted_lines ?? 0, s.total_additions ?? 0)}
-                    </td>
-                    <td className="text-muted">{formatDate(s.created_at)}</td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+      <div className="session-list">
+        {data.recent.length === 0 ? (
+          <div className="empty-state">No sessions recorded yet.</div>
+        ) : (
+          data.recent.map((s: any) => {
+            const preview = firstUserMessage(s.messages ?? "");
+            const isGemini = s.model?.toLowerCase().includes("gemini");
+            const isClaude = s.model?.toLowerCase().includes("claude");
+            
+            return (
+              <Link key={s.id} to={`/sessions/${s.id}`} className="session-item">
+                <div className="avatar">
+                  <User size={18} color="var(--on-surface-variant)" />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span className="session-summary">{preview || "Untitled Session"}</span>
+                    <span className={`badge ${isClaude ? "badge-secondary" : isGemini ? "badge-primary" : ""}`}>
+                      {isClaude ? "Claude Code" : isGemini ? "Gemini" : s.tool}
+                    </span>
+                  </div>
+                </div>
+                <div className="session-meta">
+                  <span className="mono">{shortModel(s.model)}</span>
+                  <span>•</span>
+                  <span>{formatDate(s.created_at)}</span>
+                </div>
+              </Link>
+            );
+          })
+        )}
       </div>
     </>
   );
