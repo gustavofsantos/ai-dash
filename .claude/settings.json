@@ -1,13 +1,13 @@
 {
   "hooks": {
-    "PostToolUse": "ai-dash hook claude-code PostToolUse",
-    "PreToolUse": "ai-dash hook claude-code PreToolUse",
-    "SessionEnd": "ai-dash hook claude-code SessionEnd",
-    "SessionStart": "ai-dash hook claude-code SessionStart",
-    "Stop": "ai-dash hook claude-code Stop",
-    "UserPromptSubmit": "ai-dash hook claude-code UserPromptSubmit",
-    "PreCompact": "ai-dash hook claude-code PreCompact",
-    "PostCompact": "ai-dash hook claude-code PostCompact"
+    "PostToolUse": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostToolUse",
+    "PreToolUse": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreToolUse",
+    "SessionEnd": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionEnd",
+    "SessionStart": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code SessionStart",
+    "Stop": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code Stop",
+    "UserPromptSubmit": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code UserPromptSubmit",
+    "PreCompact": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PreCompact",
+    "PostCompact": "bun /home/gsantos/Projects/git-ai-dash/src/bin/ai-dash.ts hook claude-code PostCompact"
   },
   "permissions": {
     "deny": [

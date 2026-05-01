@@ -44,9 +44,9 @@ export async function installHooks() {
     "PostCompact"
   ];
 
-  // We'll use a local alias or the full path if possible. 
-  // For simplicity, we'll assume 'ai-dash' is available or use bun run.
-  const hookCmd = "ai-dash hook claude-code";
+  // Use the absolute path to the current script for the hooks
+  const binPath = require("node:path").resolve(process.argv[1]);
+  const hookCmd = `bun ${binPath} hook claude-code`;
 
   for (const ev of events) {
     settings.hooks[ev] = `${hookCmd} ${ev}`;
@@ -59,10 +59,11 @@ export async function installHooks() {
 }
 
 async function installGitHook(hooksDir: string, hookName: string) {
+  const binPath = require("node:path").resolve(process.argv[1]);
   const hookPath = join(hooksDir, hookName);
   const hookScript = `#!/bin/bash
 # git-ai-dash hook
-ai-dash hook git ${hookName} "$@"
+bun ${binPath} hook git ${hookName} "$@"
 `;
 
   if (existsSync(hookPath)) {
