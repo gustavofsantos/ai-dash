@@ -3,15 +3,22 @@
   "module": "src/server/index.ts",
   "type": "module",
   "private": true,
+  "bin": {
+    "ai-dash": "./src/bin/ai-dash.ts"
+  },
   "scripts": {
-    "start": "bun run src/server/index.ts",
-    "dev": "bun --watch src/server/index.ts"
+    "dev": "concurrently \"bun run dev:server\" \"bun run dev:client\"",
+    "dev:server": "bun --watch src/server/index.ts",
+    "dev:client": "vite",
+    "build": "vite build",
+    "start": "bun run src/server/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
+    "concurrently": "^9.2.1",
     "vite": "^8.0.10"
   },
   "peerDependencies": {
