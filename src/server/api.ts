@@ -17,7 +17,7 @@ const api = new Hono().basePath("/api");
 const PAGE_SIZE = 20;
 
 function getDashSessions(limit = 10) {
-  return dashDb.query(`
+  const sessions = dashDb.query(`
     SELECT s.*, r.path as workdir, 
            (SELECT COUNT(*) FROM events e WHERE e.session_id = s.id) as event_count
     FROM sessions s
@@ -25,6 +25,59 @@ function getDashSessions(limit = 10) {
     ORDER BY s.started_at DESC
     LIMIT ?
   `).all(limit) as any[];
+
+  for (const s of sessions) {
+    const events = dashDb.query("SELECT * FROM events WHERE session_id = ? ORDER BY seq ASC").all(s.id) as any[];
+    const parsedEvents = events.map(e => ({ ...e, payload: JSON.parse(e.payload_json) }));
+    const messages = dashEventsToMessages(parsedEvents);
+    s.messages = JSON.stringify(messages);
+    s.created_at = Math.floor(new Date(s.started_at).getTime() / 1000);
+    s.tool = s.agent;
+  }
+
+  return sessions;
+}
+
+function dashEventsToMessages(events: any[]): any[] {
+  const messages: any[] = [];
+  
+  for (const event of events) {
+    const p = event.payload;
+    const ts = event.ts;
+
+    switch (event.type) {
+      case "UserPromptSubmit":
+        messages.push({
+          type: "user",
+          text: p.prompt || p.text || "",
+          timestamp: ts
+        });
+        break;
+      
+      case "PreToolUse":
+        messages.push({
+          type: "tool_use",
+          name: p.tool_name || p.name,
+          input: p.tool_input || p.input,
+          timestamp: ts
+        });
+        break;
+      
+      case "Stop":
+        // Usually Stop comes after assistant finishes its output
+        // If we captured any text before Stop, we could add an assistant message
+        // For now, let's look at the payload if it has the final response
+        if (p.response?.text || p.text) {
+          messages.push({
+            type: "assistant",
+            text: p.response?.text || p.text,
+            timestamp: ts
+          });
+        }
+        break;
+    }
+  }
+  return messages;
 }
 
 function getDashSession(id: string) {
@@ -39,10 +92,42 @@ function getDashSession(id: string) {
     const events = dashDb.query(`
       SELECT * FROM events WHERE session_id = ? ORDER BY seq ASC
     `).all(id) as any[];
+    
     session.events = events.map(e => ({
       ...e,
       payload: JSON.parse(e.payload_json)
     }));
+
+    // Convert events to messages for frontend compatibility
+    const messages = dashEventsToMessages(session.events);
+    session.messages = JSON.stringify(messages);
+    
+    // Convert dates to Unix timestamps for frontend consistency
+    session.created_at = Math.floor(new Date(session.started_at).getTime() / 1000);
+    session.updated_at = session.ended_at 
+      ? Math.floor(new Date(session.ended_at).getTime() / 1000)
+      : Math.floor(new Date().getTime() / 1000);
+    
+    session.tool = session.agent; // Frontend expects .tool
+
+    // Calculate additions/deletions from checkpoints
+    const checkpoints = dashDb.query(`
+      SELECT attribution_json FROM checkpoints c
+      JOIN checkpoint_sessions cs ON c.id = cs.checkpoint_id
+      WHERE cs.session_id = ?
+    `).all(session.id) as any[];
+
+    let total_additions = 0;
+    let total_deletions = 0;
+    for (const cp of checkpoints) {
+      try {
+        const attr = JSON.parse(cp.attribution_json);
+        total_additions += attr.ai_additions || 0;
+        total_deletions += attr.ai_deletions || 0;
+      } catch (e) {}
+    }
+    session.total_additions = total_additions;
+    session.total_deletions = total_deletions;
   }
   return session;
 }
@@ -115,7 +200,28 @@ api.get("/stats", async (c) => {
   };
 
   const projects = [...getProjectStats(), ...getDashProjectStats()].slice(0, 10);
-  const activity = getActivityByDay(); // TODO: merge activity
+  
+  // Merge Activity
+  const legacyActivity = getActivityByDay();
+  const dashActivity = dashDb.query(`
+    SELECT date(started_at) as date, COUNT(*) as sessions, 0 as lines
+    FROM sessions
+    GROUP BY date(started_at)
+    ORDER BY date ASC
+  `).all() as any[];
+  
+  // Simple merge by date
+  const activityMap = new Map();
+  legacyActivity.forEach(a => activityMap.set(a.date, a));
+  dashActivity.forEach(a => {
+    const existing = activityMap.get(a.date) || { date: a.date, sessions: 0, lines: 0 };
+    activityMap.set(a.date, {
+      ...existing,
+      sessions: existing.sessions + a.sessions
+    });
+  });
+  const activity = Array.from(activityMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+
   const models = getModelStats();
   
   const gitAiRecent = getSessions(10, 0);
@@ -191,7 +297,34 @@ api.get("/sessions/:id", async (c) => {
 });
 
 api.get("/sessions/:id/diff", async (c) => {
-  const session = getSession(c.req.param("id"));
+  const id = c.req.param("id");
+  
+  // Try dashDb sessions first
+  const dashSession = getDashSession(id);
+  if (dashSession) {
+    // For local sessions, we look at associated checkpoints
+    const checkpoints = dashDb.query(`
+      SELECT c.* FROM checkpoints c
+      JOIN checkpoint_sessions cs ON c.id = cs.checkpoint_id
+      WHERE cs.session_id = ?
+      ORDER BY c.created_at DESC
+    `).all(id) as any[];
+
+    if (checkpoints.length > 0) {
+      const allFiles: any[] = [];
+      for (const cp of checkpoints) {
+        try {
+          const raw = await Bun.$`git -C ${dashSession.workdir} show ${cp.commit_sha} --format="" --patch`.text();
+          const parsed = parseDiff(raw);
+          allFiles.push(...parsed.files);
+        } catch (e) {}
+      }
+      return c.json({ files: allFiles });
+    }
+    return c.json({ files: [] });
+  }
+
+  const session = getSession(id);
   if (!session) return c.json({ error: "Not found" }, 404);
 
   if (!session.commit_sha || !session.workdir) {
