@@ -1,0 +1,5 @@
+I want to revamp the session UI to display the session transcript as it is displayed now, but also have a tab displaying all the changes made during the session. Here are two images as example: [Image #1] [Image #2]
+
+---
+
+commit the changes.
