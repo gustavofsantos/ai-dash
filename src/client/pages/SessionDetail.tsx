@@ -301,7 +301,6 @@ const SessionDetail: React.FC = () => {
 
         <aside className="detail-sidebar">
           <div className="detail-sidebar-section">
-            <div className="detail-sidebar-title">Filters</div>
             <div className="filter-list">
               <div className="filter-item">
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
