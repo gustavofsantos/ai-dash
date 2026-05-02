@@ -1,0 +1,23 @@
+src/client/pages/SessionDetail.tsx
+  3697466d2fb0871e 137-248,251,422-428,593,595-596
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "483ebd129bec2e672cb0275b27c84f9fdb7daf48",
+  "prompts": {
+    "3697466d2fb0871e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3296423b-b348-42f8-9040-49a58624fd8e",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Gustavo Santos",
+      "messages": [],
+      "total_additions": 123,
+      "total_deletions": 2,
+      "accepted_lines": 123,
+      "overriden_lines": 0
+    }
+  }
+}
