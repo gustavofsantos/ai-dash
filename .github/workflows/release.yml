@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - { bun: bun-linux-x64, suffix: linux-x64 }
+          - { bun: bun-linux-arm64, suffix: linux-arm64 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: |
+          bun build --compile \
+            --target=${{ matrix.target.bun }} \
+            --minify \
+            --outfile dist/ai-dash-${{ matrix.target.suffix }} \
+            src/bin/ai-dash.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-dash-${{ matrix.target.suffix }}
+          path: dist/ai-dash-${{ matrix.target.suffix }}
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        target:
+          - { bun: bun-darwin-arm64, suffix: darwin-arm64 }
+          - { bun: bun-darwin-x64, suffix: darwin-x64 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: |
+          bun build --compile \
+            --target=${{ matrix.target.bun }} \
+            --minify \
+            --outfile dist/ai-dash-${{ matrix.target.suffix }} \
+            src/bin/ai-dash.ts
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-dash-${{ matrix.target.suffix }}
+          path: dist/ai-dash-${{ matrix.target.suffix }}
+
+  release:
+    needs: [build-linux, build-macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ai-dash-*
+          generate_release_notes: true

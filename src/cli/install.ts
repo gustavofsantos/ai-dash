@@ -1,5 +1,13 @@
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { existsSync, mkdirSync, chmodSync } from "node:fs";
+
+function getBinInvocation(): string {
+  const exe = process.argv[0] ?? "";
+  const isBunRuntime = exe.endsWith("/bun") || exe === "bun";
+  return isBunRuntime
+    ? `bun ${resolve(process.argv[1]!)}`
+    : resolve(process.argv[0]!);
+}
 
 export async function installHooks() {
   const cwd = process.cwd();
@@ -32,7 +40,7 @@ export async function installHooks() {
   }
 
   if (!settings.hooks) settings.hooks = {};
-  
+
   const events = [
     "SessionStart",
     "UserPromptSubmit",
@@ -44,8 +52,7 @@ export async function installHooks() {
     "PostCompact"
   ];
 
-  // Use the absolute path to the current script for the hooks
-  const binPath = require("node:path").resolve(process.argv[1]);
+  const binInvocation = getBinInvocation();
 
   for (const ev of events) {
     settings.hooks[ev] = [
@@ -54,7 +61,7 @@ export async function installHooks() {
         "hooks": [
           {
             "type": "command",
-            "command": `bun ${binPath} hook claude-code ${ev}`
+            "command": `${binInvocation} hook claude-code ${ev}`
           }
         ]
       }
@@ -68,11 +75,11 @@ export async function installHooks() {
 }
 
 async function installGitHook(hooksDir: string, hookName: string) {
-  const binPath = require("node:path").resolve(process.argv[1]);
+  const binInvocation = getBinInvocation();
   const hookPath = join(hooksDir, hookName);
   const hookScript = `#!/bin/bash
 # git-ai-dash hook
-bun ${binPath} hook git ${hookName} "$@"
+${binInvocation} hook git ${hookName} "$@"
 `;
 
   if (existsSync(hookPath)) {

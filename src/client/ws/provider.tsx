@@ -48,7 +48,6 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
       ws.onerror = (err) => {
         console.error("[WS] Error", err);
-        ws.close();
       };
     };
 

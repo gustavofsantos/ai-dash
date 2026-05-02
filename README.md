@@ -2,35 +2,63 @@
 
 A local dashboard for [Git AI](https://usegitai.com) that visualizes your AI coding sessions, line attribution stats, and conversation history — all from the data Git AI collects on your machine.
 
-## Requirements
-
-- [Bun](https://bun.sh) ≥ 1.3
-- Internet access for Chart.js (loaded from CDN)
-
 ## Install
 
+### Binary (recommended)
+
+Download the latest binary for your platform from [Releases](../../releases/latest):
+
+| Platform | File |
+|----------|------|
+| macOS Apple Silicon | `ai-dash-darwin-arm64` |
+| macOS Intel | `ai-dash-darwin-x64` |
+| Linux x64 | `ai-dash-linux-x64` |
+| Linux ARM64 | `ai-dash-linux-arm64` |
+
 ```sh
+# macOS (Apple Silicon)
+curl -L https://github.com/gsantos-hc/git-ai-dash/releases/latest/download/ai-dash-darwin-arm64 \
+  -o /usr/local/bin/ai-dash && chmod +x /usr/local/bin/ai-dash
+
+# macOS (Intel)
+curl -L https://github.com/gsantos-hc/git-ai-dash/releases/latest/download/ai-dash-darwin-x64 \
+  -o /usr/local/bin/ai-dash && chmod +x /usr/local/bin/ai-dash
+
+# Linux x64
+curl -L https://github.com/gsantos-hc/git-ai-dash/releases/latest/download/ai-dash-linux-x64 \
+  -o /usr/local/bin/ai-dash && chmod +x /usr/local/bin/ai-dash
+```
+
+> **macOS note:** On first run you may need to allow the binary in **System Settings → Privacy & Security**, or remove the quarantine flag:
+> ```sh
+> xattr -d com.apple.quarantine /usr/local/bin/ai-dash
+> ```
+
+### Start the server
+
+```sh
+ai-dash --serve
+```
+
+Open [http://localhost:3333](http://localhost:3333). Use `PORT=4000 ai-dash --serve` for a different port.
+
+### Connect your AI agent
+
+Run this once inside any project you want to track:
+
+```sh
+ai-dash install
+```
+
+This writes hooks to `.claude/settings.json` and `.git/hooks/` so Claude Code (and other supported agents) automatically send events to the dashboard.
+
+### From source (requires [Bun](https://bun.sh) ≥ 1.3)
+
+```sh
+git clone https://github.com/gsantos-hc/git-ai-dash
+cd git-ai-dash
 bun install
-```
-
-## Run
-
-```sh
-bun start
-```
-
-Then open [http://localhost:3333](http://localhost:3333).
-
-To auto-restart on file changes during development:
-
-```sh
 bun dev
-```
-
-To use a different port:
-
-```sh
-PORT=4000 bun start
 ```
 
 ## Pages
