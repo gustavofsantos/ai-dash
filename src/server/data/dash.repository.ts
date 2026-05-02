@@ -10,6 +10,7 @@ export class DashRepository {
              (SELECT COUNT(*) FROM events e WHERE e.session_id = s.id) as event_count
       FROM sessions s
       JOIN repos r ON s.repo_id = r.id
+      WHERE (SELECT COUNT(*) FROM events e WHERE e.session_id = s.id) > 0
       ORDER BY s.started_at DESC
       LIMIT ?
     `).all(limit) as any[];
@@ -76,7 +77,7 @@ export class DashRepository {
   }
 
   getSessionCount() {
-    return (this.db.query("SELECT COUNT(*) as count FROM sessions").get() as any)?.count || 0;
+    return (this.db.query("SELECT COUNT(*) as count FROM sessions WHERE (SELECT COUNT(*) FROM events e WHERE e.session_id = sessions.id) > 0").get() as any)?.count || 0;
   }
 
   getSessionsAfter(timestamp: number) {
