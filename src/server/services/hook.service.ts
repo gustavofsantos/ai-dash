@@ -3,7 +3,7 @@ import { AttributionService } from "./attribution.service.ts";
 import { getRepoId } from "../utils/repoId.ts";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
-import { statSync, existsSync, readFileSync } from "node:fs";
+import { statSync, existsSync } from "node:fs";
 
 export class HookService {
   constructor(
@@ -74,19 +74,8 @@ export class HookService {
 
     if (hook_event_name === "SessionEnd") {
       const updates: Record<string, any> = { state: "ended", ended_at: new Date().toISOString() };
-
-      const sessionFilePath = join(cwd, ".git", "entire-sessions", `${session_id}.json`);
-      try {
-        if (existsSync(sessionFilePath)) {
-          const content = JSON.parse(readFileSync(sessionFilePath, "utf8"));
-          if (content.token_usage) {
-            updates.token_usage_json = JSON.stringify(content.token_usage);
-          }
-        }
-      } catch (e) {
-        console.error("Failed to read session token usage:", e);
-      }
-
+      // Note: token_usage is no longer populated from .git/entire-sessions
+      // Token usage analytics will need to be implemented via a different data source
       this.repository.updateSession(session_id, updates);
     }
   }
