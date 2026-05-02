@@ -185,7 +185,7 @@ export class DashRepository {
       SELECT date(started_at) as date,
         SUM(COALESCE(json_extract(token_usage_json,'$.input_tokens'),0)) as input_tokens,
         SUM(COALESCE(json_extract(token_usage_json,'$.output_tokens'),0)) as output_tokens,
-        SUM(COALESCE(json_extract(token_usage_json,'$.cache_creation_tokens'),0)) as cache_tokens
+        SUM(COALESCE(json_extract(token_usage_json,'$.cache_creation_tokens'),0)) + SUM(COALESCE(json_extract(token_usage_json,'$.cache_read_tokens'),0)) as cache_tokens
       FROM sessions
       WHERE token_usage_json IS NOT NULL
       GROUP BY date(started_at) ORDER BY date ASC
