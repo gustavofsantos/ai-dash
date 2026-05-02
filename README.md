@@ -5,7 +5,6 @@ A local dashboard for [Git AI](https://usegitai.com) that visualizes your AI cod
 ## Requirements
 
 - [Bun](https://bun.sh) ≥ 1.3
-- [Git AI](https://usegitai.com/docs/cli) installed and used at least once (data lives in `~/.git-ai/internal/db`)
 - Internet access for Chart.js (loaded from CDN)
 
 ## Install
@@ -44,22 +43,21 @@ PORT=4000 bun start
 
 ## Data sources
 
-All data is read directly from Git AI's local SQLite database at `~/.git-ai/internal/db`. The dashboard opens it **read-only** and never writes to it.
+All data is stored in the dashboard's local SQLite database at `~/.git-ai-dash/db`.
 
 | Field | What it shows |
 |-------|---------------|
-| Sessions | Each time an AI agent (e.g. Claude Code) ran and was tracked by Git AI |
-| AI Lines Written | `total_additions` across all sessions |
-| Acceptance Rate | `accepted_lines / total_additions` — lines you kept vs. AI wrote |
-| Projects | Distinct `workdir` paths touched across sessions |
-
-> **Note:** `accepted_lines` populates only after Git AI reconciles checkpoints at commit time. Early sessions may show 0%.
+| Sessions | AI coding agent sessions captured and stored |
+| AI Lines Written | Line additions and modifications tracked |
+| Acceptance Rate | Lines you kept vs. total changes |
+| Projects | Distinct projects touched across sessions |
 
 ## Project structure
 
 ```
 src/
-  db.ts       read-only SQLite queries against ~/.git-ai/internal/db
-  views.ts    server-rendered HTML (dark theme, Chart.js charts)
-  index.ts    Hono routes + Bun server
+  cli/        CLI commands for git hooks
+  client/     React frontend (SPA)
+  server/     Bun server with Hono routes
+  server/data/  SQLite database and queries
 ```
