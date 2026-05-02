@@ -134,9 +134,121 @@ const ChangesPanel: React.FC<{ sessionId: string }> = ({ sessionId }) => {
   );
 };
 
+interface CheckpointAttribution {
+  ai_additions: number;
+  ai_deletions: number;
+  human_additions: number;
+  human_deletions: number;
+}
+
+interface Checkpoint {
+  id: string;
+  commit_sha: string;
+  short_sha: string;
+  created_at: string;
+  strategy: string;
+  attribution: CheckpointAttribution | null;
+}
+
+const CheckpointDiff: React.FC<{ sessionId: string; sha: string }> = ({ sessionId, sha }) => {
+  const { data, isLoading } = useQuery<DiffData>({
+    queryKey: ['sessions', sessionId, 'checkpoints', sha, 'diff'],
+    queryFn: async () => {
+      const res = await fetch(`/api/sessions/${sessionId}/checkpoints/${sha}/diff`);
+      if (!res.ok) return { files: [] };
+      return res.json() as Promise<DiffData>;
+    }
+  });
+
+  if (isLoading) return <div style={{ padding: "16px", color: "var(--on-surface-variant)", fontSize: "13px" }}>Loading diff...</div>;
+  if (!data?.files.length) return <div style={{ padding: "16px", color: "var(--on-surface-variant)", fontSize: "13px" }}>No changes in this checkpoint.</div>;
+
+  return (
+    <div style={{ borderTop: "1px solid var(--border)", marginTop: "8px" }}>
+      {data.files.map(file => <DiffViewer key={file.path} file={file} />)}
+    </div>
+  );
+};
+
+const CheckpointsPanel: React.FC<{ sessionId: string }> = ({ sessionId }) => {
+  const [expandedSha, setExpandedSha] = useState<string | null>(null);
+
+  const { data: checkpoints, isLoading } = useQuery<Checkpoint[]>({
+    queryKey: ['sessions', sessionId, 'checkpoints'],
+    queryFn: async () => {
+      const res = await fetch(`/api/sessions/${sessionId}/checkpoints`);
+      if (!res.ok) return [];
+      return res.json() as Promise<Checkpoint[]>;
+    }
+  });
+
+  if (isLoading) return <div style={{ padding: 32, color: "var(--on-surface-variant)" }}>Loading checkpoints...</div>;
+
+  if (!checkpoints?.length) {
+    return (
+      <div className="empty-state" style={{ padding: "80px" }}>
+        <div style={{ fontSize: "32px", marginBottom: "16px" }}>~</div>
+        <div>No checkpoints recorded for this session.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: "24px 0" }}>
+      {checkpoints.map(cp => {
+        const isExpanded = expandedSha === cp.commit_sha;
+        const attr = cp.attribution;
+        return (
+          <div key={cp.id} style={{ marginBottom: "8px", border: "1px solid var(--border)", borderRadius: "8px", overflow: "hidden", background: "var(--surface)" }}>
+            <div
+              onClick={() => setExpandedSha(isExpanded ? null : cp.commit_sha)}
+              style={{ display: "flex", alignItems: "center", gap: "16px", padding: "12px 16px", cursor: "pointer", userSelect: "none" }}
+            >
+              <GitCommit size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
+              <code style={{ fontFamily: "monospace", fontSize: "13px", color: "var(--primary)", minWidth: "60px" }}>{cp.short_sha}</code>
+              <span style={{ fontSize: "12px", color: "var(--on-surface-variant)", minWidth: "120px" }}>
+                {new Date(cp.created_at).toLocaleTimeString()}
+              </span>
+              {cp.strategy && (
+                <span style={{
+                  fontSize: "11px",
+                  padding: "2px 8px",
+                  borderRadius: "4px",
+                  background: cp.strategy === "manual" ? "var(--primary-container)" : "var(--surface-variant)",
+                  color: cp.strategy === "manual" ? "var(--on-primary-container)" : "var(--on-surface-variant)"
+                }}>
+                  {cp.strategy}
+                </span>
+              )}
+              <div style={{ display: "flex", gap: "12px", marginLeft: "auto", fontSize: "13px" }}>
+                {attr ? (
+                  <>
+                    <span style={{ color: "var(--tertiary)" }}>+{attr.ai_additions} AI</span>
+                    <span style={{ color: "var(--error)" }}>-{attr.ai_deletions} AI</span>
+                    {(attr.human_additions > 0 || attr.human_deletions > 0) && (
+                      <>
+                        <span style={{ color: "var(--on-surface-variant)" }}>+{attr.human_additions} human</span>
+                        <span style={{ color: "var(--on-surface-variant)" }}>-{attr.human_deletions} human</span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span style={{ color: "var(--on-surface-variant)", fontSize: "12px" }}>no attribution</span>
+                )}
+              </div>
+              {isExpanded ? <ChevronUp size={16} color="var(--on-surface-variant)" style={{ flexShrink: 0 }} /> : <ChevronDown size={16} color="var(--on-surface-variant)" style={{ flexShrink: 0 }} />}
+            </div>
+            {isExpanded && <CheckpointDiff sessionId={sessionId} sha={cp.commit_sha} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 const SessionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<'transcript' | 'changes'>('transcript');
+  const [activeTab, setActiveTab] = useState<'transcript' | 'changes' | 'checkpoints'>('transcript');
   const [expandedTools, setExpandedTools] = useState<Record<number, boolean>>({});
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
   const [compactToolUses, setCompactToolUses] = useState(true);
@@ -307,6 +419,13 @@ const SessionDetail: React.FC = () => {
           Changes
           {changedFilesCount > 0 && <span className="tab-badge">{changedFilesCount}</span>}
         </button>
+        <button
+          className={`session-tab${activeTab === 'checkpoints' ? ' active' : ''}`}
+          onClick={() => setActiveTab('checkpoints')}
+        >
+          Checkpoints
+          {session.checkpoint_count > 0 && <span className="tab-badge">{session.checkpoint_count}</span>}
+        </button>
       </div>
 
       {activeTab === 'transcript' ? (
@@ -471,8 +590,10 @@ const SessionDetail: React.FC = () => {
             </div>
           </aside>
         </div>
-      ) : (
+      ) : activeTab === 'changes' ? (
         <ChangesPanel sessionId={id!} />
+      ) : (
+        <CheckpointsPanel sessionId={id!} />
       )}
     </div>
   );
