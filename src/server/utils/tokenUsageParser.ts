@@ -1,49 +1,44 @@
-/**
- * Parse token usage from Claude Code session transcript
- * Claude Code includes token usage stats in the transcript
- */
-export function extractTokenUsageFromTranscript(transcript: string): {
+export interface TokenUsage {
   input_tokens?: number;
   output_tokens?: number;
   cache_creation_tokens?: number;
   cache_read_tokens?: number;
-} | null {
-  if (!transcript) return null;
+}
 
-  const tokenUsage: Record<string, number> = {};
+/**
+ * Parse token usage by summing all assistant message usage entries in a Claude Code JSONL transcript.
+ * Each assistant entry has a `message.usage` object with input_tokens, output_tokens, etc.
+ */
+export function extractTokenUsageFromTranscriptJsonl(jsonlContent: string): TokenUsage | null {
+  if (!jsonlContent) return null;
 
-  // Look for token usage patterns in the transcript
-  // Claude Code typically includes tokens info like:
-  // "input_tokens: 1234"
-  // "output_tokens: 5678"
-  // "cache_creation_input_tokens: 123"
-  // "cache_read_input_tokens: 456"
+  let input = 0;
+  let output = 0;
+  let cacheCreation = 0;
+  let cacheRead = 0;
+  let found = false;
 
-  // Match plain "input_tokens" (not cache_*_input_tokens)
-  const inputMatch = transcript.match(/^[^c]*?\binput_tokens[:\s=]+(\d+)/im);
-  if (inputMatch) {
-    tokenUsage.input_tokens = parseInt(inputMatch[1], 10);
+  for (const line of jsonlContent.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      const entry = JSON.parse(trimmed);
+      const usage = entry?.message?.usage;
+      if (!usage) continue;
+      found = true;
+      input += usage.input_tokens || 0;
+      output += usage.output_tokens || 0;
+      cacheCreation += usage.cache_creation_input_tokens || 0;
+      cacheRead += usage.cache_read_input_tokens || 0;
+    } catch {}
   }
 
-  const outputMatch = transcript.match(/output_tokens[:\s=]+(\d+)/i);
-  if (outputMatch) {
-    tokenUsage.output_tokens = parseInt(outputMatch[1], 10);
-  }
+  if (!found) return null;
 
-  const cacheCreationMatch = transcript.match(/cache_creation[_\s]+input_tokens[:\s=]+(\d+)/i);
-  if (cacheCreationMatch) {
-    tokenUsage.cache_creation_tokens = parseInt(cacheCreationMatch[1], 10);
-  }
-
-  const cacheReadMatch = transcript.match(/cache_read[_\s]+input_tokens[:\s=]+(\d+)/i);
-  if (cacheReadMatch) {
-    tokenUsage.cache_read_tokens = parseInt(cacheReadMatch[1], 10);
-  }
-
-  // Return null if no token data found
-  if (Object.keys(tokenUsage).length === 0) {
-    return null;
-  }
-
-  return tokenUsage;
+  return {
+    input_tokens: input,
+    output_tokens: output,
+    cache_creation_tokens: cacheCreation,
+    cache_read_tokens: cacheRead,
+  };
 }

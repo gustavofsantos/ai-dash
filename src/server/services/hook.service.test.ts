@@ -143,58 +143,24 @@ describe("HookService ExitPlanMode", () => {
     expect(session.transcript).toBe(transcriptContent);
   });
 
-  test("should extract token usage from transcript in events", async () => {
-    const sessionId = "token-tracking-session";
-    const transcriptWithTokens = `
-      Interaction 1:
-      input_tokens: 100
-      output_tokens: 200
-      cache_creation_input_tokens: 50
-      cache_read_input_tokens: 25
-    `;
-
-    const sessionStartPayload = {
-      session_id: sessionId,
-      cwd: testDir,
-      hook_event_name: "SessionStart",
-      model: "claude-code"
-    };
-    await hookService.handleHookEvent("claude-code", sessionStartPayload);
-
-    // Send an event with transcript containing token data
-    const eventPayload = {
-      session_id: sessionId,
-      cwd: testDir,
-      hook_event_name: "ToolCall",
-      transcript: transcriptWithTokens
-    };
-    await hookService.handleHookEvent("claude-code", eventPayload);
-
-    // Verify token usage was extracted and stored in event
-    const events = testDb.query(
-      "SELECT * FROM events WHERE session_id = ? AND type = 'ToolCall'"
-    ).all(sessionId) as any[];
-    
-    expect(events).toHaveLength(1);
-    expect(events[0].token_usage_json).toBeDefined();
-    
-    const tokenUsage = JSON.parse(events[0].token_usage_json);
-    expect(tokenUsage.input_tokens).toBe(100);
-    expect(tokenUsage.output_tokens).toBe(200);
-    expect(tokenUsage.cache_creation_tokens).toBe(50);
-    expect(tokenUsage.cache_read_tokens).toBe(25);
-  });
-
-  test("should calculate cumulative token usage across events", async () => {
+  test("should extract token usage from transcript_path on Stop event", async () => {
     const { SessionService } = await import("./session.service.ts");
     const { GitService } = await import("./git.service.ts");
     const { GeminiService } = await import("./gemini.service.ts");
 
-    const gitService = new GitService();
-    const geminiService = new GeminiService();
-    const sessionService = new SessionService(testRepo, gitService, geminiService);
+    const sessionId = "token-tracking-session";
+    const transcriptPath = join(testDir, `${sessionId}.jsonl`);
 
-    const sessionId = "cumulative-tokens-session";
+    const makeAssistantLine = (usage: Record<string, number>) =>
+      JSON.stringify({ type: "assistant", message: { role: "assistant", usage } });
+
+    await Bun.write(
+      transcriptPath,
+      [
+        makeAssistantLine({ input_tokens: 100, output_tokens: 200, cache_creation_input_tokens: 50, cache_read_input_tokens: 25 }),
+        makeAssistantLine({ input_tokens: 50, output_tokens: 75 }),
+      ].join("\n")
+    );
 
     const sessionStartPayload = {
       session_id: sessionId,
@@ -204,45 +170,50 @@ describe("HookService ExitPlanMode", () => {
     };
     await hookService.handleHookEvent("claude-code", sessionStartPayload);
 
-    // Send first event with tokens
-    const event1Payload = {
+    const stopPayload = {
       session_id: sessionId,
       cwd: testDir,
-      hook_event_name: "ToolCall",
-      transcript: "input_tokens: 100\noutput_tokens: 200"
+      hook_event_name: "Stop",
+      transcript_path: transcriptPath,
+      last_assistant_message: "Done."
     };
-    await hookService.handleHookEvent("claude-code", event1Payload);
+    await hookService.handleHookEvent("claude-code", stopPayload);
 
-    // Send second event with more tokens
-    const event2Payload = {
-      session_id: sessionId,
-      cwd: testDir,
-      hook_event_name: "ToolCall",
-      transcript: "input_tokens: 50\noutput_tokens: 100"
-    };
-    await hookService.handleHookEvent("claude-code", event2Payload);
-
-    // Fetch session and verify cumulative totals
+    const gitService = new GitService();
+    const geminiService = new GeminiService();
+    const sessionService = new SessionService(testRepo, gitService, geminiService);
     const session = await sessionService.getSession(sessionId);
-    
-    expect(session.events).toHaveLength(3); // SessionStart + 2 ToolCalls
-    
-    // First ToolCall should have cumulative: 100 input, 200 output
-    const firstToolCall = session.events.find((e: any) => e.type === "ToolCall" && e.seq === 1);
-    expect(firstToolCall.cumulative_tokens).toBeDefined();
-    expect(firstToolCall.cumulative_tokens.input_tokens).toBe(100);
-    expect(firstToolCall.cumulative_tokens.output_tokens).toBe(200);
-    expect(firstToolCall.cumulative_tokens.total).toBe(300);
 
-    // Second ToolCall should have cumulative: 150 input, 300 output
-    const secondToolCall = session.events.find((e: any) => e.type === "ToolCall" && e.seq === 2);
-    expect(secondToolCall.cumulative_tokens).toBeDefined();
-    expect(secondToolCall.cumulative_tokens.input_tokens).toBe(150);
-    expect(secondToolCall.cumulative_tokens.output_tokens).toBe(300);
-    expect(secondToolCall.cumulative_tokens.total).toBe(450);
+    // Session should have summed totals from the JSONL transcript
+    expect(session.total_tokens).toBe(150 + 275 + 50 + 25); // input+output+cache
+    const raw = JSON.parse(testDb.query("SELECT token_usage_json FROM sessions WHERE id = ?").get(sessionId).token_usage_json);
+    expect(raw.input_tokens).toBe(150);
+    expect(raw.output_tokens).toBe(275);
+    expect(raw.cache_creation_tokens).toBe(50);
+    expect(raw.cache_read_tokens).toBe(25);
+  });
 
-    // Session should have total_tokens
-    expect(session.total_tokens).toBe(450);
+  test("should handle Stop event with missing or nonexistent transcript_path", async () => {
+    const sessionId = "no-transcript-session";
+
+    await hookService.handleHookEvent("claude-code", {
+      session_id: sessionId,
+      cwd: testDir,
+      hook_event_name: "SessionStart",
+      model: "claude-code"
+    });
+
+    // transcript_path points to a nonexistent file — should not throw
+    await hookService.handleHookEvent("claude-code", {
+      session_id: sessionId,
+      cwd: testDir,
+      hook_event_name: "Stop",
+      transcript_path: join(testDir, "nonexistent.jsonl"),
+      last_assistant_message: "Done."
+    });
+
+    const row = testDb.query("SELECT token_usage_json FROM sessions WHERE id = ?").get(sessionId) as any;
+    expect(row.token_usage_json).toBeNull();
   });
 
   test("should handle events without token usage", async () => {
@@ -256,25 +227,22 @@ describe("HookService ExitPlanMode", () => {
 
     const sessionId = "no-tokens-session";
 
-    const sessionStartPayload = {
+    await hookService.handleHookEvent("claude-code", {
       session_id: sessionId,
       cwd: testDir,
       hook_event_name: "SessionStart",
       model: "claude-code"
-    };
-    await hookService.handleHookEvent("claude-code", sessionStartPayload);
+    });
 
-    // Send event without transcript
-    const eventPayload = {
+    await hookService.handleHookEvent("claude-code", {
       session_id: sessionId,
       cwd: testDir,
       hook_event_name: "ToolCall"
-    };
-    await hookService.handleHookEvent("claude-code", eventPayload);
+    });
 
     const session = await sessionService.getSession(sessionId);
     expect(session.total_tokens).toBe(0);
-    
+
     const toolCallEvent = session.events.find((e: any) => e.type === "ToolCall");
     expect(toolCallEvent.token_usage).toBeUndefined();
     expect(toolCallEvent.cumulative_tokens).toBeUndefined();

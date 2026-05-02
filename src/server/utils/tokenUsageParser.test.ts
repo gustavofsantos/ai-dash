@@ -1,61 +1,68 @@
 import { test, expect } from "bun:test";
-import { extractTokenUsageFromTranscript } from "./tokenUsageParser.ts";
+import { extractTokenUsageFromTranscriptJsonl } from "./tokenUsageParser.ts";
 
-test("extractTokenUsageFromTranscript parses input_tokens", () => {
-  const transcript = "input_tokens: 1234";
-  const result = extractTokenUsageFromTranscript(transcript);
-  expect(result).toEqual({ input_tokens: 1234 });
+const makeAssistantLine = (usage: Record<string, number>) =>
+  JSON.stringify({ type: "assistant", message: { role: "assistant", usage } });
+
+test("extractTokenUsageFromTranscriptJsonl parses a single assistant entry", () => {
+  const jsonl = makeAssistantLine({ input_tokens: 100, output_tokens: 200 });
+  const result = extractTokenUsageFromTranscriptJsonl(jsonl);
+  expect(result).toEqual({ input_tokens: 100, output_tokens: 200, cache_creation_tokens: 0, cache_read_tokens: 0 });
 });
 
-test("extractTokenUsageFromTranscript parses output_tokens", () => {
-  const transcript = "output_tokens: 5678";
-  const result = extractTokenUsageFromTranscript(transcript);
-  expect(result).toEqual({ output_tokens: 5678 });
+test("extractTokenUsageFromTranscriptJsonl sums multiple assistant entries", () => {
+  const lines = [
+    makeAssistantLine({ input_tokens: 100, output_tokens: 200 }),
+    makeAssistantLine({ input_tokens: 50, output_tokens: 75 }),
+  ].join("\n");
+  const result = extractTokenUsageFromTranscriptJsonl(lines);
+  expect(result).toEqual({ input_tokens: 150, output_tokens: 275, cache_creation_tokens: 0, cache_read_tokens: 0 });
 });
 
-test("extractTokenUsageFromTranscript parses cache tokens", () => {
-  const transcript = "cache_creation_input_tokens: 100\ncache_read_input_tokens: 200";
-  const result = extractTokenUsageFromTranscript(transcript);
+test("extractTokenUsageFromTranscriptJsonl parses cache tokens", () => {
+  const jsonl = makeAssistantLine({
+    input_tokens: 3,
+    output_tokens: 255,
+    cache_creation_input_tokens: 5887,
+    cache_read_input_tokens: 10580,
+  });
+  const result = extractTokenUsageFromTranscriptJsonl(jsonl);
   expect(result).toEqual({
-    cache_creation_tokens: 100,
-    cache_read_tokens: 200,
+    input_tokens: 3,
+    output_tokens: 255,
+    cache_creation_tokens: 5887,
+    cache_read_tokens: 10580,
   });
 });
 
-test("extractTokenUsageFromTranscript parses all token types", () => {
-  const transcript = `
-    input_tokens: 1000
-    output_tokens: 2000
-    cache_creation_input_tokens: 500
-    cache_read_input_tokens: 300
-  `;
-  const result = extractTokenUsageFromTranscript(transcript);
-  expect(result).toEqual({
-    input_tokens: 1000,
-    output_tokens: 2000,
-    cache_creation_tokens: 500,
-    cache_read_tokens: 300,
-  });
+test("extractTokenUsageFromTranscriptJsonl skips non-assistant entries", () => {
+  const lines = [
+    JSON.stringify({ type: "user", message: { role: "user", content: "hi" } }),
+    makeAssistantLine({ input_tokens: 50, output_tokens: 100 }),
+    JSON.stringify({ type: "permission-mode", permissionMode: "acceptEdits" }),
+  ].join("\n");
+  const result = extractTokenUsageFromTranscriptJsonl(lines);
+  expect(result).toEqual({ input_tokens: 50, output_tokens: 100, cache_creation_tokens: 0, cache_read_tokens: 0 });
 });
 
-test("extractTokenUsageFromTranscript returns null for empty transcript", () => {
-  const result = extractTokenUsageFromTranscript("");
-  expect(result).toBeNull();
+test("extractTokenUsageFromTranscriptJsonl returns null for empty content", () => {
+  expect(extractTokenUsageFromTranscriptJsonl("")).toBeNull();
 });
 
-test("extractTokenUsageFromTranscript returns null when no tokens found", () => {
-  const result = extractTokenUsageFromTranscript("Some random text without token info");
-  expect(result).toBeNull();
+test("extractTokenUsageFromTranscriptJsonl returns null when no usage found", () => {
+  const lines = [
+    JSON.stringify({ type: "user", message: { role: "user", content: "hi" } }),
+    JSON.stringify({ type: "permission-mode", permissionMode: "acceptEdits" }),
+  ].join("\n");
+  expect(extractTokenUsageFromTranscriptJsonl(lines)).toBeNull();
 });
 
-test("extractTokenUsageFromTranscript handles different spacing formats", () => {
-  const transcript = `
-    input_tokens=1234
-    output_tokens: 5678
-    cache_creation_input_tokens: 999
-  `;
-  const result = extractTokenUsageFromTranscript(transcript);
-  expect(result?.input_tokens).toBe(1234);
-  expect(result?.output_tokens).toBe(5678);
-  expect(result?.cache_creation_tokens).toBe(999);
+test("extractTokenUsageFromTranscriptJsonl ignores malformed lines", () => {
+  const lines = [
+    "not valid json {{{",
+    makeAssistantLine({ input_tokens: 10, output_tokens: 20 }),
+  ].join("\n");
+  const result = extractTokenUsageFromTranscriptJsonl(lines);
+  expect(result?.input_tokens).toBe(10);
+  expect(result?.output_tokens).toBe(20);
 });

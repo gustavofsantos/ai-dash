@@ -1,7 +1,7 @@
 import { DashRepository } from "../data/dash.repository.ts";
 import { AttributionService } from "./attribution.service.ts";
 import { getRepoId } from "../utils/repoId.ts";
-import { extractTokenUsageFromTranscript } from "../utils/tokenUsageParser.ts";
+import { extractTokenUsageFromTranscriptJsonl } from "../utils/tokenUsageParser.ts";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { statSync, existsSync } from "node:fs";
@@ -41,16 +41,7 @@ export class HookService {
 
     // Record Event
     const nextSeq = this.repository.getNextEventSeq(session_id);
-    
-    // Extract token usage from transcript if available in payload
-    let tokenUsageJson: string | null = null;
-    if (payload.transcript) {
-      const tokenUsage = extractTokenUsageFromTranscript(payload.transcript);
-      if (tokenUsage) {
-        tokenUsageJson = JSON.stringify(tokenUsage);
-      }
-    }
-    
+
     this.repository.insertEvent({
       id: randomUUID(),
       session_id,
@@ -58,43 +49,49 @@ export class HookService {
       ts: new Date().toISOString(),
       type: hook_event_name,
       payload_json: JSON.stringify(payload),
-      token_usage_json: tokenUsageJson
+      token_usage_json: null
     });
 
     // Handle Shadow Tracking on Stop
     if (hook_event_name === "Stop") {
       await this.handleShadowSnapshot(session_id, repoId, cwd);
+      await this.updateSessionTokenUsageFromTranscript(session_id, payload.transcript_path);
     }
 
     if (hook_event_name === "ExitPlanMode") {
       const updates: Record<string, any> = {};
-      
+
       if (payload.plan) {
         updates.plan_markdown = payload.plan;
       }
       if (payload.transcript) {
         updates.plan_transcript_text = payload.transcript;
-        
-        // Extract token usage from transcript
-        const tokenUsage = extractTokenUsageFromTranscript(payload.transcript);
-        if (tokenUsage) {
-          updates.token_usage_json = JSON.stringify(tokenUsage);
-        }
       }
       if (payload.allowedPrompts) {
         updates.allowed_prompts_json = JSON.stringify(payload.allowedPrompts);
       }
-      
+
       if (Object.keys(updates).length > 0) {
         this.repository.updateSession(session_id, updates);
       }
     }
 
     if (hook_event_name === "SessionEnd") {
-      const updates: Record<string, any> = { state: "ended", ended_at: new Date().toISOString() };
-      // Note: token_usage is no longer populated from .git/entire-sessions
-      // Token usage analytics will need to be implemented via a different data source
-      this.repository.updateSession(session_id, updates);
+      this.repository.updateSession(session_id, { state: "ended", ended_at: new Date().toISOString() });
+      await this.updateSessionTokenUsageFromTranscript(session_id, payload.transcript_path);
+    }
+  }
+
+  async updateSessionTokenUsageFromTranscript(sessionId: string, transcriptPath?: string) {
+    if (!transcriptPath || !existsSync(transcriptPath)) return;
+    try {
+      const content = await Bun.file(transcriptPath).text();
+      const tokenUsage = extractTokenUsageFromTranscriptJsonl(content);
+      if (tokenUsage) {
+        this.repository.updateSession(sessionId, { token_usage_json: JSON.stringify(tokenUsage) });
+      }
+    } catch (e) {
+      console.error("Failed to extract token usage from transcript:", e);
     }
   }
 
