@@ -73,7 +73,48 @@ export class SessionService {
     const author = this.dashRepo.getSessionAuthor(id);
     session.human_author = author?.author_name ?? null;
 
+    // Expose plan and transcript if present
+    if (session.plan_markdown) {
+      session.plan = session.plan_markdown;
+    }
+    if (session.plan_transcript_text) {
+      session.transcript = session.plan_transcript_text;
+    }
+    if (session.allowed_prompts_json) {
+      try {
+        session.allowed_prompts = JSON.parse(session.allowed_prompts_json);
+      } catch {}
+    }
+
     return session;
+  }
+
+  async getSessionCheckpointsDetail(id: string) {
+    const session = this.dashRepo.getSession(id);
+    if (!session) return null;
+
+    const checkpoints = this.dashRepo.getSessionCheckpoints(id);
+    return checkpoints.map(cp => {
+      let attribution = null;
+      try { attribution = JSON.parse(cp.attribution_json); } catch {}
+      return {
+        id: cp.id,
+        commit_sha: cp.commit_sha,
+        short_sha: cp.commit_sha.slice(0, 7),
+        created_at: cp.created_at,
+        strategy: cp.strategy,
+        attribution,
+      };
+    });
+  }
+
+  async getCheckpointDiff(sessionId: string, sha: string) {
+    const session = this.dashRepo.getSession(sessionId);
+    if (!session) return null;
+
+    const raw = await this.gitService.getShowPatch(session.workdir, sha);
+    if (!raw) return { files: [] };
+    return parseDiff(raw);
   }
 
   async getSessionDiff(id: string) {

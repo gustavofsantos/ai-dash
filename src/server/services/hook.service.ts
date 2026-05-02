@@ -54,6 +54,24 @@ export class HookService {
       await this.handleShadowSnapshot(session_id, repoId, cwd);
     }
 
+    if (hook_event_name === "ExitPlanMode") {
+      const updates: Record<string, any> = {};
+      
+      if (payload.plan) {
+        updates.plan_markdown = payload.plan;
+      }
+      if (payload.transcript) {
+        updates.plan_transcript_text = payload.transcript;
+      }
+      if (payload.allowedPrompts) {
+        updates.allowed_prompts_json = JSON.stringify(payload.allowedPrompts);
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        this.repository.updateSession(session_id, updates);
+      }
+    }
+
     if (hook_event_name === "SessionEnd") {
       const updates: Record<string, any> = { state: "ended", ended_at: new Date().toISOString() };
 

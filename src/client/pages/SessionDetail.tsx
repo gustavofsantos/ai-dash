@@ -15,7 +15,8 @@ import {
   MessageSquare,
   Zap,
   CheckCircle2,
-  Clock3
+  Clock3,
+  GitCommit
 } from "lucide-react";
 import {
   shortModel,

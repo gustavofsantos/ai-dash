@@ -22,6 +22,7 @@ export class DashRepository {
   getSession(id: string) {
     return this.db.query(`
       SELECT s.id, s.repo_id, s.agent, COALESCE(s.model, 'unknown') as model, s.started_at, s.ended_at, s.state,
+             s.token_usage_json, s.plan_markdown, s.plan_transcript_text, s.allowed_prompts_json,
              r.path as workdir
       FROM sessions s
       JOIN repos r ON s.repo_id = r.id

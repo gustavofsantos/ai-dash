@@ -99,5 +99,18 @@ export function runMigrations(db: Database) {
     // Column already exists
   }
 
+  // Add plan_markdown, plan_transcript_text, allowed_prompts_json to sessions (idempotent)
+  try {
+    db.run("ALTER TABLE sessions ADD COLUMN plan_markdown TEXT");
+  } catch (_) {}
+
+  try {
+    db.run("ALTER TABLE sessions ADD COLUMN plan_transcript_text TEXT");
+  } catch (_) {}
+
+  try {
+    db.run("ALTER TABLE sessions ADD COLUMN allowed_prompts_json TEXT");
+  } catch (_) {}
+
   console.log("Migrations applied successfully.");
 }

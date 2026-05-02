@@ -27,6 +27,21 @@ export function createSessionRoutes(sessionService: SessionService) {
     return c.json(session);
   });
 
+  app.get("/:id/checkpoints", async (c) => {
+    const id = c.req.param("id");
+    const checkpoints = await sessionService.getSessionCheckpointsDetail(id);
+    if (!checkpoints) return c.json({ error: "Session not found" }, 404);
+    return c.json(checkpoints);
+  });
+
+  app.get("/:id/checkpoints/:sha/diff", async (c) => {
+    const id = c.req.param("id");
+    const sha = c.req.param("sha");
+    const diff = await sessionService.getCheckpointDiff(id, sha);
+    if (!diff) return c.json({ error: "Session not found" }, 404);
+    return c.json(diff);
+  });
+
   app.get("/:id/diff", async (c) => {
     const id = c.req.param("id");
     const diff = await sessionService.getSessionDiff(id);
