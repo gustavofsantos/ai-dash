@@ -34,11 +34,11 @@ export async function installHooks() {
   if (!settings.hooks) settings.hooks = {};
   
   const events = [
-    "SessionStart", 
-    "UserPromptSubmit", 
-    "Stop", 
-    "SessionEnd", 
-    "PreToolUse", 
+    "SessionStart",
+    "UserPromptSubmit",
+    "Stop",
+    "SessionEnd",
+    "PreToolUse",
     "PostToolUse",
     "PreCompact",
     "PostCompact"

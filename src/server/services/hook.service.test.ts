@@ -36,77 +36,68 @@ describe("HookService ExitPlanMode", () => {
     testDb.run("DELETE FROM repos");
   });
 
-  test("should capture ExitPlanMode event and store plan, transcript, and allowedPrompts", async () => {
+  test("should capture ExitPlanMode tool use and store plan and allowedPrompts", async () => {
     const sessionId = "test-plan-session";
     const planContent = "# Session Plan\n\n## Phase 1\n- Task A\n- Task B";
-    const transcriptContent = "Claude: Hello!\nUser: Let's start with task A";
     const allowedPrompts = [
       { tool: "Bash", prompt: "run bun test" },
       { tool: "Bash", prompt: "run git commands" }
     ];
 
-    // First, create a session
-    const sessionStartPayload = {
+    await hookService.handleHookEvent("claude-code", {
       session_id: sessionId,
       cwd: testDir,
       hook_event_name: "SessionStart",
       model: "gpt-4"
-    };
-    await hookService.handleHookEvent("claude-code", sessionStartPayload);
+    });
 
-    // Then send ExitPlanMode event
-    const exitPlanPayload = {
+    // ExitPlanMode arrives as a PostToolUse event; plan is in tool_response
+    await hookService.handleHookEvent("claude-code", {
       session_id: sessionId,
       cwd: testDir,
-      hook_event_name: "ExitPlanMode",
-      plan: planContent,
-      transcript: transcriptContent,
-      allowedPrompts: allowedPrompts
-    };
-    await hookService.handleHookEvent("claude-code", exitPlanPayload);
+      hook_event_name: "PostToolUse",
+      tool_name: "ExitPlanMode",
+      tool_input: {},
+      tool_response: { plan: planContent, allowedPrompts, filePath: "/tmp/plan.md" }
+    });
 
-    // Verify the data was stored
     const session = testDb.query("SELECT * FROM sessions WHERE id = ?").get(sessionId) as any;
     expect(session).toBeDefined();
     expect(session.plan_markdown).toBe(planContent);
-    expect(session.plan_transcript_text).toBe(transcriptContent);
-    
+
     const storedPrompts = JSON.parse(session.allowed_prompts_json);
     expect(storedPrompts).toEqual(allowedPrompts);
 
-    // Verify event was recorded
-    const events = testDb.query("SELECT * FROM events WHERE session_id = ? AND type = 'ExitPlanMode'").all(sessionId) as any[];
+    const events = testDb.query("SELECT * FROM events WHERE session_id = ? AND type = 'PostToolUse'").all(sessionId) as any[];
     expect(events).toHaveLength(1);
   });
 
-  test("should handle partial ExitPlanMode data", async () => {
+  test("should handle ExitPlanMode with plan only (no allowedPrompts)", async () => {
     const sessionId = "partial-plan-session";
     const planContent = "# Quick Plan";
 
-    const sessionStartPayload = {
+    await hookService.handleHookEvent("claude-code", {
       session_id: sessionId,
       cwd: testDir,
       hook_event_name: "SessionStart",
       model: "gpt-4"
-    };
-    await hookService.handleHookEvent("claude-code", sessionStartPayload);
+    });
 
-    // Only send plan, no transcript or allowedPrompts
-    const partialPayload = {
+    await hookService.handleHookEvent("claude-code", {
       session_id: sessionId,
       cwd: testDir,
-      hook_event_name: "ExitPlanMode",
-      plan: planContent
-    };
-    await hookService.handleHookEvent("claude-code", partialPayload);
+      hook_event_name: "PostToolUse",
+      tool_name: "ExitPlanMode",
+      tool_input: {},
+      tool_response: { plan: planContent }
+    });
 
     const session = testDb.query("SELECT * FROM sessions WHERE id = ?").get(sessionId) as any;
     expect(session.plan_markdown).toBe(planContent);
-    expect(session.plan_transcript_text).toBeNull();
     expect(session.allowed_prompts_json).toBeNull();
   });
 
-  test("should return plan and transcript through SessionService API", async () => {
+  test("should return plan through SessionService API", async () => {
     const { SessionService } = await import("./session.service.ts");
     const { GitService } = await import("./git.service.ts");
     const { GeminiService } = await import("./gemini.service.ts");
@@ -117,30 +108,27 @@ describe("HookService ExitPlanMode", () => {
 
     const sessionId = "api-plan-session";
     const planContent = "# Test Plan";
-    const transcriptContent = "Test transcript";
 
-    const sessionStartPayload = {
+    await hookService.handleHookEvent("claude-code", {
       session_id: sessionId,
       cwd: testDir,
       hook_event_name: "SessionStart",
       model: "gpt-4"
-    };
-    await hookService.handleHookEvent("claude-code", sessionStartPayload);
+    });
 
-    const exitPlanPayload = {
+    await hookService.handleHookEvent("claude-code", {
       session_id: sessionId,
       cwd: testDir,
-      hook_event_name: "ExitPlanMode",
-      plan: planContent,
-      transcript: transcriptContent
-    };
-    await hookService.handleHookEvent("claude-code", exitPlanPayload);
+      hook_event_name: "PostToolUse",
+      tool_name: "ExitPlanMode",
+      tool_input: {},
+      tool_response: { plan: planContent }
+    });
 
-    // Fetch via SessionService
     const session = await sessionService.getSession(sessionId);
     expect(session).toBeDefined();
     expect(session.plan).toBe(planContent);
-    expect(session.transcript).toBe(transcriptContent);
+    expect(session.transcript).toBeFalsy();
   });
 
   test("should extract token usage from transcript_path on Stop event", async () => {

@@ -58,18 +58,15 @@ export class HookService {
       await this.updateSessionTokenUsageFromTranscript(session_id, payload.transcript_path);
     }
 
-    if (hook_event_name === "ExitPlanMode") {
+    if (hook_event_name === "PostToolUse" && payload.tool_name === "ExitPlanMode") {
       const updates: Record<string, any> = {};
 
-      if (payload.plan) {
-        updates.plan_markdown = payload.plan;
-      }
-      if (payload.transcript) {
-        updates.plan_transcript_text = payload.transcript;
-      }
-      if (payload.allowedPrompts) {
-        updates.allowed_prompts_json = JSON.stringify(payload.allowedPrompts);
-      }
+      // Plan content is in tool_response.plan (Claude Code ≥2.x) or tool_input.plan (older)
+      const plan = payload.tool_response?.plan ?? payload.tool_input?.plan;
+      if (plan) updates.plan_markdown = plan;
+
+      const allowedPrompts = payload.tool_response?.allowedPrompts ?? payload.tool_input?.allowedPrompts;
+      if (allowedPrompts) updates.allowed_prompts_json = JSON.stringify(allowedPrompts);
 
       if (Object.keys(updates).length > 0) {
         this.repository.updateSession(session_id, updates);
