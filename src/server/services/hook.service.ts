@@ -1,6 +1,7 @@
 import { DashRepository } from "../data/dash.repository.ts";
 import { AttributionService } from "./attribution.service.ts";
 import { getRepoId } from "../utils/repoId.ts";
+import { extractTokenUsageFromTranscript } from "../utils/tokenUsageParser.ts";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { statSync, existsSync } from "node:fs";
@@ -62,6 +63,12 @@ export class HookService {
       }
       if (payload.transcript) {
         updates.plan_transcript_text = payload.transcript;
+        
+        // Extract token usage from transcript
+        const tokenUsage = extractTokenUsageFromTranscript(payload.transcript);
+        if (tokenUsage) {
+          updates.token_usage_json = JSON.stringify(tokenUsage);
+        }
       }
       if (payload.allowedPrompts) {
         updates.allowed_prompts_json = JSON.stringify(payload.allowedPrompts);
