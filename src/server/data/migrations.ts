@@ -112,5 +112,10 @@ export function runMigrations(db: Database) {
     db.run("ALTER TABLE sessions ADD COLUMN allowed_prompts_json TEXT");
   } catch (_) {}
 
+  // Add token_usage_json to events (idempotent)
+  try {
+    db.run("ALTER TABLE events ADD COLUMN token_usage_json TEXT");
+  } catch (_) {}
+
   console.log("Migrations applied successfully.");
 }

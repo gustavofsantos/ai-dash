@@ -118,11 +118,11 @@ export class DashRepository {
     );
   }
 
-  insertEvent(event: { id: string, session_id: string, seq: number, ts: string, type: string, payload_json: string }) {
+  insertEvent(event: { id: string, session_id: string, seq: number, ts: string, type: string, payload_json: string, token_usage_json?: string | null }) {
     return this.db.run(
-      `INSERT INTO events (id, session_id, seq, ts, type, payload_json)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [event.id, event.session_id, event.seq, event.ts, event.type, event.payload_json]
+      `INSERT INTO events (id, session_id, seq, ts, type, payload_json, token_usage_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [event.id, event.session_id, event.seq, event.ts, event.type, event.payload_json, event.token_usage_json ?? null]
     );
   }
 

@@ -41,13 +41,24 @@ export class HookService {
 
     // Record Event
     const nextSeq = this.repository.getNextEventSeq(session_id);
+    
+    // Extract token usage from transcript if available in payload
+    let tokenUsageJson: string | null = null;
+    if (payload.transcript) {
+      const tokenUsage = extractTokenUsageFromTranscript(payload.transcript);
+      if (tokenUsage) {
+        tokenUsageJson = JSON.stringify(tokenUsage);
+      }
+    }
+    
     this.repository.insertEvent({
       id: randomUUID(),
       session_id,
       seq: nextSeq,
       ts: new Date().toISOString(),
       type: hook_event_name,
-      payload_json: JSON.stringify(payload)
+      payload_json: JSON.stringify(payload),
+      token_usage_json: tokenUsageJson
     });
 
     // Handle Shadow Tracking on Stop

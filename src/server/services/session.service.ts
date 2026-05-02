@@ -33,13 +33,48 @@ export class SessionService {
     if (!session) return null;
 
     const events = this.dashRepo.getSessionEvents(id);
-    session.events = events.map(e => ({
-      ...e,
-      payload: JSON.parse(e.payload_json)
-    }));
+    session.events = events.map(e => {
+      const parsed: any = {
+        ...e,
+        payload: JSON.parse(e.payload_json)
+      };
+      // Parse token_usage_json if present
+      if (e.token_usage_json) {
+        try {
+          parsed.token_usage = JSON.parse(e.token_usage_json);
+        } catch {}
+      }
+      return parsed;
+    });
 
     const messages = dashEventsToMessages(session.events);
     session.messages = JSON.stringify(messages);
+    
+    // Calculate cumulative token usage per event
+    let cumulativeInput = 0;
+    let cumulativeOutput = 0;
+    let cumulativeCache = 0;
+    let totalTokens = 0;
+    
+    for (const event of session.events) {
+      if (event.token_usage) {
+        const tu = event.token_usage;
+        cumulativeInput += tu.input_tokens || 0;
+        cumulativeOutput += tu.output_tokens || 0;
+        cumulativeCache += (tu.cache_creation_tokens || 0) + (tu.cache_read_tokens || 0);
+        totalTokens = cumulativeInput + cumulativeOutput + cumulativeCache;
+        
+        // Attach cumulative totals to event for display
+        event.cumulative_tokens = {
+          input_tokens: cumulativeInput,
+          output_tokens: cumulativeOutput,
+          cache_tokens: cumulativeCache,
+          total: totalTokens
+        };
+      }
+    }
+    
+    session.total_tokens = totalTokens;
     
     session.created_at = Math.floor(new Date(session.started_at).getTime() / 1000);
     session.updated_at = session.ended_at 
