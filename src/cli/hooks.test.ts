@@ -66,6 +66,7 @@ describe("cli/hooks characterization", () => {
     await Bun.$`git -C ${testDir} init`;
     await Bun.$`git -C ${testDir} config user.email "test@example.com"`;
     await Bun.$`git -C ${testDir} config user.name "Test User"`;
+    await Bun.$`git -C ${testDir} config commit.gpgsign false`;
     
     writeFileSync(join(testDir, "test.txt"), "hello");
     await Bun.$`git -C ${testDir} add test.txt`;
@@ -94,6 +95,7 @@ describe("cli/hooks characterization", () => {
     await Bun.$`git -C ${testDir} init`;
     await Bun.$`git -C ${testDir} config user.email "test@example.com"`;
     await Bun.$`git -C ${testDir} config user.name "Test User"`;
+    await Bun.$`git -C ${testDir} config commit.gpgsign false`;
     
     const filePath = join(testDir, "feat.txt");
     writeFileSync(filePath, "line 1\nline 2\nline 3\n");
