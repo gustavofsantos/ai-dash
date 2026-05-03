@@ -246,6 +246,81 @@ const CheckpointsPanel: React.FC<{ sessionId: string }> = ({ sessionId }) => {
   );
 };
 
+const TokenHistogram: React.FC<{ turns: any[] }> = ({ turns }) => {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const chartRef = React.useRef<any>(null);
+
+  React.useEffect(() => {
+    if (!canvasRef.current || turns.length < 2) return;
+
+    const Chart = (window as any).Chart;
+    if (!Chart) return;
+
+    if (chartRef.current) chartRef.current.destroy();
+
+    const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const colors = {
+      text: isDark ? "#A1A1AA" : "#666666",
+      border: isDark ? "#27272A" : "#E0E0E0",
+      grid: isDark ? "#1A1A1A" : "#FAFAFA",
+    };
+
+    chartRef.current = new Chart(canvasRef.current, {
+      type: "bar",
+      data: {
+        labels: turns.map(t => new Date(t.timestamp).toLocaleTimeString()),
+        datasets: [
+          {
+            label: "Input",
+            data: turns.map(t => t.input_tokens || 0),
+            backgroundColor: isDark ? "#3B82F6" : "#0052FF",
+            stack: "tokens",
+          },
+          {
+            label: "Output",
+            data: turns.map(t => t.output_tokens || 0),
+            backgroundColor: isDark ? "#22C55E" : "#10B981",
+            stack: "tokens",
+          },
+          {
+            label: "Cache",
+            data: turns.map(t => (t.cache_creation_tokens || 0) + (t.cache_read_tokens || 0)),
+            backgroundColor: isDark ? "#A855F7" : "#8B5CF6",
+            stack: "tokens",
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: true, labels: { color: colors.text, font: { size: 10 } } },
+          tooltip: {
+            backgroundColor: isDark ? "#0A0A0A" : "#FFFFFF",
+            titleColor: isDark ? "#F2F2F2" : "#1A1A1A",
+            bodyColor: isDark ? "#A1A1AA" : "#666666",
+            borderColor: colors.border,
+            borderWidth: 1,
+            cornerRadius: 0,
+          },
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false }, ticks: { font: { size: 9 }, color: colors.text, maxRotation: 45 } },
+          y: { stacked: true, grid: { color: colors.grid }, ticks: { font: { size: 9 }, color: colors.text } },
+        },
+      },
+    });
+
+    return () => {
+      if (chartRef.current) chartRef.current.destroy();
+    };
+  }, [turns.length]);
+
+  if (turns.length < 2) return null;
+
+  return <canvas ref={canvasRef} style={{ width: "100%", maxHeight: 180 }} />;
+};
+
 const SessionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [activeTab, setActiveTab] = useState<'transcript' | 'changes' | 'checkpoints' | 'plan'>('transcript');
@@ -583,6 +658,12 @@ const SessionDetail: React.FC = () => {
           </div>
 
           <aside className="detail-sidebar">
+            {session.token_timeline?.length >= 2 && (
+              <div className="detail-sidebar-section">
+                <div style={{ fontSize: 12, color: "var(--on-surface-variant)", marginBottom: 8 }}>Token usage per turn</div>
+                <TokenHistogram turns={session.token_timeline} />
+              </div>
+            )}
             <div className="detail-sidebar-section">
               <div className="filter-list">
                 <div className="filter-item">

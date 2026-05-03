@@ -3,6 +3,8 @@ import type { GitService } from "./git.service.ts";
 import type { GeminiService } from "./gemini.service.ts";
 import { dashEventsToMessages } from "../utils/eventParser.ts";
 import { parseDiff } from "../utils/diffParser.ts";
+import { extractTokenTimelineFromTranscriptJsonl } from "../utils/tokenUsageParser.ts";
+import { existsSync } from "node:fs";
 
 export class SessionService {
   constructor(
@@ -118,6 +120,16 @@ export class SessionService {
     if (session.allowed_prompts_json) {
       try {
         session.allowed_prompts = JSON.parse(session.allowed_prompts_json);
+      } catch {}
+    }
+
+    // Extract per-turn token timeline from transcript JSONL
+    const stopEvent = session.events.find((e: any) => e.type === "Stop");
+    const transcriptPath = stopEvent?.payload?.transcript_path;
+    if (transcriptPath && existsSync(transcriptPath)) {
+      try {
+        const content = await Bun.file(transcriptPath).text();
+        session.token_timeline = extractTokenTimelineFromTranscriptJsonl(content);
       } catch {}
     }
 

@@ -5,6 +5,14 @@ export interface TokenUsage {
   cache_read_tokens?: number;
 }
 
+export interface TokenTurn {
+  timestamp: string;
+  input_tokens: number;
+  output_tokens: number;
+  cache_creation_tokens: number;
+  cache_read_tokens: number;
+}
+
 /**
  * Parse token usage by summing all assistant message usage entries in a Claude Code JSONL transcript.
  * Each assistant entry has a `message.usage` object with input_tokens, output_tokens, etc.
@@ -41,4 +49,25 @@ export function extractTokenUsageFromTranscriptJsonl(jsonlContent: string): Toke
     cache_creation_tokens: cacheCreation,
     cache_read_tokens: cacheRead,
   };
+}
+
+export function extractTokenTimelineFromTranscriptJsonl(jsonlContent: string): TokenTurn[] {
+  const turns: TokenTurn[] = [];
+  for (const line of jsonlContent.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      const entry = JSON.parse(trimmed);
+      const usage = entry?.message?.usage;
+      if (!usage || !entry.timestamp) continue;
+      turns.push({
+        timestamp: entry.timestamp,
+        input_tokens: usage.input_tokens || 0,
+        output_tokens: usage.output_tokens || 0,
+        cache_creation_tokens: usage.cache_creation_input_tokens || 0,
+        cache_read_tokens: usage.cache_read_input_tokens || 0,
+      });
+    } catch {}
+  }
+  return turns;
 }
