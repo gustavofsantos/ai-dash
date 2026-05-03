@@ -1,0 +1,9 @@
+Plan to add the Pierre Diffs to display diffs: https://diffs.com/
+
+---
+
+Try reading the docs here: https://diffs.com/docs
+
+---
+
+sorry, continue

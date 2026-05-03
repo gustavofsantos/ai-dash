@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.6",
+  "checkpoint_id": "8484172335bf",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "bun.lock",
+    "package.json",
+    "src/client/pages/SessionDetail.tsx",
+    "src/client/styles/global.css",
+    "src/server/utils/diffParser.ts",
+    "tsconfig.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/84/84172335bf/0/metadata.json",
+      "transcript": "/84/84172335bf/0/full.jsonl",
+      "content_hash": "/84/84172335bf/0/content_hash.txt",
+      "prompt": "/84/84172335bf/0/prompt.txt"
+    }
+  ]
+}
