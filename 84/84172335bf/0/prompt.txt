@@ -7,3 +7,7 @@ Try reading the docs here: https://diffs.com/docs
 ---
 
 sorry, continue
+
+---
+
+good, commit the changes made to support pierre diffs
