@@ -1,0 +1,16 @@
+#!/bin/sh
+# Run the full test suite (client + server) before every push.
+# Exit non-zero to abort the push if any test fails.
+
+echo "Running test suite before push..."
+bun test
+exit_code=$?
+
+if [ $exit_code -ne 0 ]; then
+  echo ""
+  echo "Push aborted: test suite failed. Fix the failures above and try again."
+  exit 1
+fi
+
+echo "All tests passed."
+exit 0
