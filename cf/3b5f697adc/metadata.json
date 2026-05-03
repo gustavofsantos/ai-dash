@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.6",
+  "checkpoint_id": "cf3b5f697adc",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/bin/ai-dash.ts",
+    "src/cli/hooks.test.ts",
+    "src/cli/hooks.ts",
+    "src/cli/install.ts",
+    "src/server/data/dash.repository.ts",
+    "src/server/data/migrations.ts",
+    "src/server/services/gemini.service.ts",
+    "src/server/services/hook.service.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/cf/3b5f697adc/0/metadata.json",
+      "transcript": "/cf/3b5f697adc/0/full.jsonl",
+      "content_hash": "/cf/3b5f697adc/0/content_hash.txt",
+      "prompt": "/cf/3b5f697adc/0/prompt.txt"
+    }
+  ]
+}

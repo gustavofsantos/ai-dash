@@ -1,0 +1,72 @@
+{
+  "cli_version": "0.5.6",
+  "checkpoint_id": "cf3b5f697adc",
+  "session_id": "44fad543-cfaf-4025-adfb-4b71c778f5a2",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-03T17:27:18.736303562Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "src/bin/ai-dash.ts",
+    "src/cli/hooks.test.ts",
+    "src/cli/hooks.ts",
+    "src/cli/install.ts",
+    "src/server/data/dash.repository.ts",
+    "src/server/data/migrations.ts",
+    "src/server/services/gemini.service.ts",
+    "src/server/services/hook.service.ts"
+  ],
+  "agent": "Gemini CLI",
+  "model": "gemini-3-flash-preview",
+  "turn_id": "84e3e670d06b",
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-03T17:27:18.732309237Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 26,
+    "total_committed": 0,
+    "total_lines_changed": 26,
+    "agent_percentage": 0,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 274,
+      "user_lines_removed": 26,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0,
+      "user_added_per_file": {
+        "src/bin/ai-dash.ts": 17,
+        "src/cli/hooks.test.ts": 81,
+        "src/cli/hooks.ts": 18,
+        "src/cli/install.ts": 60,
+        "src/server/data/dash.repository.ts": 2,
+        "src/server/data/migrations.ts": 1,
+        "src/server/services/gemini.service.ts": 32,
+        "src/server/services/hook.service.ts": 63
+      },
+      "user_removed_per_file": {
+        "src/bin/ai-dash.ts": 9,
+        "src/cli/hooks.ts": 4,
+        "src/cli/install.ts": 3,
+        "src/server/data/dash.repository.ts": 2,
+        "src/server/data/migrations.ts": 1,
+        "src/server/services/gemini.service.ts": 1,
+        "src/server/services/hook.service.ts": 6
+      }
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 274,
+      "agent_lines_removed": 26
+    }
+  ]
+}
