@@ -1,0 +1,42 @@
+tsconfig.json
+  762e8db65ce9b2ae 4
+src/server/utils/diffParser.ts
+  762e8db65ce9b2ae 20,29-35,47-48,62-63,80
+src/client/styles/global.css
+  762e8db65ce9b2ae 667-672
+src/client/pages/SessionDetail.tsx
+  762e8db65ce9b2ae 6,31,38,48-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "9943b73f14f550ec67a527f31c3ddb28b79c44bd",
+  "prompts": {
+    "762e8db65ce9b2ae": {
+      "agent_id": {
+        "tool": "gemini",
+        "id": "b09f304a-3388-425d-96aa-ba91bfd84945",
+        "model": "unknown"
+      },
+      "human_author": "Gustavo Santos",
+      "messages": [],
+      "total_additions": 32,
+      "total_deletions": 97,
+      "accepted_lines": 32,
+      "overriden_lines": 0
+    },
+    "90925e08fdbc45c8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8f9776b8-ecd4-472f-9fcc-70da066e93f6",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Gustavo Santos",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 4,
+      "accepted_lines": 0,
+      "overriden_lines": 7
+    }
+  }
+}
