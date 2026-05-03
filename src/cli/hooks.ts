@@ -21,20 +21,34 @@ export async function handleHook(args: string[]) {
   }
 
   const rawInput = await Bun.stdin.text();
-  if (!rawInput) return;
+  if (!rawInput) {
+    // For Gemini hooks: return allow by default if no input
+    console.log(JSON.stringify({ allow: true }));
+    return;
+  }
 
   let payload: any;
   try {
     payload = JSON.parse(rawInput);
   } catch (e) {
-    console.error("Failed to parse hook JSON input");
+    // For Gemini hooks: return allow on parse error (don't block)
+    console.log(JSON.stringify({ allow: true }));
     return;
   }
 
   if (!payload || typeof payload !== "object") {
-    console.error("Invalid hook payload: expected object");
+    // For Gemini hooks: return allow on invalid payload (don't block)
+    console.log(JSON.stringify({ allow: true }));
     return;
   }
 
-  await hookService.handleHookEvent(tool, payload);
+  try {
+    await hookService.handleHookEvent(tool, payload);
+  } catch (e) {
+    console.error(`Hook processing error: ${e}`, { stderr: true });
+  }
+
+  // For Gemini hooks: always return allow after processing
+  // This tells Gemini CLI to continue normally
+  console.log(JSON.stringify({ allow: true }));
 }

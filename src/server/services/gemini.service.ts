@@ -17,6 +17,7 @@ export class GeminiService {
 
       const messages: DashboardMessage[] = [];
       let model: string | undefined;
+      const tokenCounts: Array<{ input: number; output: number; cached?: number; thoughts?: number; tool?: number }> = [];
 
       for (const line of lines) {
         try {
@@ -29,6 +30,11 @@ export class GeminiService {
 
           if (geminiMsg.model) {
             model = geminiMsg.model;
+          }
+
+          // Extract token usage from gemini messages
+          if (geminiMsg.type === "gemini" && geminiMsg.tokens) {
+            tokenCounts.push(geminiMsg.tokens);
           }
 
           if (geminiMsg.type === "user") {
@@ -68,10 +74,35 @@ export class GeminiService {
         }
       }
 
-      return { messages, model };
+      return { messages, model, tokenCounts };
     } catch (e) {
       console.error(`Error reading Gemini transcript at ${path}: ${e}`);
       return null;
     }
+  }
+
+  extractGeminiTokenUsage(tokenCounts: Array<{ input: number; output: number; cached?: number; thoughts?: number; tool?: number }>) {
+    if (!tokenCounts || tokenCounts.length === 0) return null;
+
+    const totals = {
+      input: 0,
+      output: 0,
+      cached: 0,
+      thoughts: 0,
+      tool: 0,
+      total: 0
+    };
+
+    for (const count of tokenCounts) {
+      totals.input += count.input || 0;
+      totals.output += count.output || 0;
+      totals.cached += count.cached || 0;
+      totals.thoughts += count.thoughts || 0;
+      totals.tool += count.tool || 0;
+    }
+
+    totals.total = totals.input + totals.output;
+
+    return totals;
   }
 }

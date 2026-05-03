@@ -117,5 +117,5 @@ export function runMigrations(db: Database) {
     db.run("ALTER TABLE events ADD COLUMN token_usage_json TEXT");
   } catch (_) {}
 
-  console.log("Migrations applied successfully.");
+  console.error("Migrations applied successfully.");
 }

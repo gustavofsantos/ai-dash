@@ -1,5 +1,6 @@
 import { DashRepository } from "../data/dash.repository.ts";
 import { AttributionService } from "./attribution.service.ts";
+import { GeminiService } from "./gemini.service.ts";
 import { getRepoId } from "../utils/repoId.ts";
 import { extractTokenUsageFromTranscriptJsonl } from "../utils/tokenUsageParser.ts";
 import { randomUUID } from "node:crypto";
@@ -7,10 +8,14 @@ import { join } from "node:path";
 import { statSync, existsSync } from "node:fs";
 
 export class HookService {
+  private geminiService: GeminiService;
+
   constructor(
     private repository: DashRepository,
     private attributionService: AttributionService
-  ) {}
+  ) {
+    this.geminiService = new GeminiService();
+  }
 
   async handleHookEvent(tool: string, payload: any) {
     const { session_id, cwd, hook_event_name } = payload;
@@ -22,21 +27,31 @@ export class HookService {
     this.repository.upsertRepo(repoId, cwd);
 
     // Ensure session exists
+    // For Gemini, model is always null (no model field in payload)
+    const sessionModel = tool === "gemini" ? null : payload.model;
     this.repository.insertSession({
       id: session_id,
       repo_id: repoId,
       agent: tool,
-      model: payload.model,
+      model: sessionModel,
       started_at: new Date().toISOString(),
       state: "active"
     });
 
     // Update session info if this is a SessionStart event
     if (hook_event_name === "SessionStart") {
-      this.repository.updateSession(session_id, {
-        model: payload.model || "unknown",
-        agent: tool
-      });
+      const updates: Record<string, any> = { agent: tool };
+      if (tool !== "gemini") {
+        // For Claude Code, set model to payload.model or "unknown"
+        updates.model = payload.model || "unknown";
+      }
+      // For Gemini, model stays null (no payload.model field)
+      this.repository.updateSession(session_id, updates);
+    }
+
+    // Handle Gemini lifecycle events
+    if (tool === "gemini") {
+      await this._handleGeminiEvent(session_id, hook_event_name, payload, repoId, cwd);
     }
 
     // Record Event
@@ -78,6 +93,48 @@ export class HookService {
     if (hook_event_name === "SessionEnd") {
       this.repository.updateSession(session_id, { state: "ended", ended_at: new Date().toISOString() });
       await this.updateSessionTokenUsageFromTranscript(session_id, payload.transcript_path);
+    }
+  }
+
+  private async _handleGeminiEvent(session_id: string, hook_event_name: string, payload: any, repoId: string, cwd: string) {
+    if (hook_event_name === "AfterAgent") {
+      this.repository.updateSession(session_id, { state: "idle" });
+      
+      // Extract model from transcript
+      if (payload.transcript_path) {
+        await this._backfillGeminiModel(session_id, payload.transcript_path);
+        await this._extractGeminiTokenUsage(session_id, payload.transcript_path);
+      }
+
+      // Shadow snapshot (same as Claude's Stop)
+      await this.handleShadowSnapshot(session_id, repoId, cwd);
+    }
+  }
+
+  private async _backfillGeminiModel(session_id: string, transcriptPath: string) {
+    if (!existsSync(transcriptPath)) return;
+    try {
+      const result = await this.geminiService.parseGeminiTranscript(transcriptPath);
+      if (result?.model) {
+        this.repository.updateSession(session_id, { model: result.model });
+      }
+    } catch (e) {
+      console.error("Failed to extract model from Gemini transcript:", e);
+    }
+  }
+
+  private async _extractGeminiTokenUsage(session_id: string, transcriptPath: string) {
+    if (!existsSync(transcriptPath)) return;
+    try {
+      const result = await this.geminiService.parseGeminiTranscript(transcriptPath);
+      if (result?.tokenCounts) {
+        const tokenUsage = this.geminiService.extractGeminiTokenUsage(result.tokenCounts);
+        if (tokenUsage) {
+          this.repository.updateSession(session_id, { token_usage_json: JSON.stringify(tokenUsage) });
+        }
+      }
+    } catch (e) {
+      console.error("Failed to extract token usage from Gemini transcript:", e);
     }
   }
 

@@ -102,11 +102,11 @@ export class DashRepository {
     );
   }
 
-  insertSession(session: { id: string, repo_id: string, agent: string, model?: string, started_at: string, state?: string }) {
+  insertSession(session: { id: string, repo_id: string, agent: string, model?: string | null, started_at: string, state?: string }) {
     return this.db.run(
       `INSERT OR IGNORE INTO sessions (id, repo_id, agent, model, started_at, state)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [session.id, session.repo_id, session.agent, session.model || "unknown", session.started_at, session.state || "active"]
+      [session.id, session.repo_id, session.agent, session.model === null ? null : (session.model || "unknown"), session.started_at, session.state || "active"]
     );
   }
 

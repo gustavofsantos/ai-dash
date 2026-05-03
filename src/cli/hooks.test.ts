@@ -145,4 +145,85 @@ describe("cli/hooks characterization", () => {
     const shadow = testDb.query("SELECT * FROM shadow_refs WHERE session_id = ?").all(sessionId);
     expect(shadow).toHaveLength(0);
   });
+
+  test("should handle Gemini SessionStart event", async () => {
+    const sessionId = "gemini-session-start";
+    const payload = {
+      session_id: sessionId,
+      cwd: testDir,
+      hook_event_name: "SessionStart",
+      timestamp: new Date().toISOString()
+    };
+
+    await hookService.handleHookEvent("gemini", payload);
+
+    const sessions = testDb.query("SELECT * FROM sessions WHERE id = ?").all(sessionId) as any[];
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].id).toBe(sessionId);
+    expect(sessions[0].agent).toBe("gemini");
+    expect(sessions[0].model).toBeNull();
+
+    const events = testDb.query("SELECT * FROM events WHERE session_id = ?").all(sessionId) as any[];
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("SessionStart");
+  });
+
+  test("should handle Gemini AfterAgent event", async () => {
+    const sessionId = "gemini-session-afteragent";
+    const repoId = await getRepoId(testDir);
+
+    // Create session
+    testDb.run("INSERT INTO repos (id, path) VALUES (?, ?)", [repoId, testDir]);
+    testDb.run(
+      "INSERT INTO sessions (id, repo_id, agent, started_at, state) VALUES (?, ?, ?, ?, ?)",
+      [sessionId, repoId, "gemini", new Date().toISOString(), "active"]
+    );
+
+    const payload = {
+      session_id: sessionId,
+      cwd: testDir,
+      hook_event_name: "AfterAgent",
+      timestamp: new Date().toISOString()
+    };
+
+    await hookService.handleHookEvent("gemini", payload);
+
+    const sessions = testDb.query("SELECT * FROM sessions WHERE id = ?").all(sessionId) as any[];
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].state).toBe("idle");
+
+    const events = testDb.query("SELECT * FROM events WHERE session_id = ?").all(sessionId) as any[];
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("AfterAgent");
+  });
+
+  test("should handle Gemini SessionEnd event", async () => {
+    const sessionId = "gemini-session-end";
+    const repoId = await getRepoId(testDir);
+
+    // Create session
+    testDb.run("INSERT INTO repos (id, path) VALUES (?, ?)", [repoId, testDir]);
+    testDb.run(
+      "INSERT INTO sessions (id, repo_id, agent, started_at, state) VALUES (?, ?, ?, ?, ?)",
+      [sessionId, repoId, "gemini", new Date().toISOString(), "active"]
+    );
+
+    const payload = {
+      session_id: sessionId,
+      cwd: testDir,
+      hook_event_name: "SessionEnd",
+      timestamp: new Date().toISOString()
+    };
+
+    await hookService.handleHookEvent("gemini", payload);
+
+    const sessions = testDb.query("SELECT * FROM sessions WHERE id = ?").all(sessionId) as any[];
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].state).toBe("ended");
+    expect(sessions[0].ended_at).not.toBeNull();
+
+    const events = testDb.query("SELECT * FROM events WHERE session_id = ?").all(sessionId) as any[];
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("SessionEnd");
+  });
 });

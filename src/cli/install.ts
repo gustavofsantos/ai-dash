@@ -9,11 +9,15 @@ function getBinInvocation(): string {
     : resolve(process.argv[0]!);
 }
 
-export async function installHooks() {
+export async function installHooks(options?: { claudeCode?: boolean; gemini?: boolean }) {
   const cwd = process.cwd();
   console.log(`Installing git-ai-dash hooks in ${cwd}...`);
 
-  // 1. Git Hooks
+  // Default to all targets if no flags provided
+  const installClaudeCode = options?.claudeCode ?? options === undefined;
+  const installGemini = options?.gemini ?? options === undefined;
+
+  // 1. Git Hooks (always installed)
   const hooksDir = join(cwd, ".git", "hooks");
   if (!existsSync(hooksDir)) {
     console.error("Error: .git/hooks directory not found. Are you in a git repository?");
@@ -24,6 +28,19 @@ export async function installHooks() {
   await installGitHook(hooksDir, "post-commit");
 
   // 2. Claude Code Hooks
+  if (installClaudeCode) {
+    await installClaudeCodeHooks(cwd);
+  }
+
+  // 3. Gemini Hooks
+  if (installGemini) {
+    await installGeminiHooks();
+  }
+
+  console.log("Installation complete!");
+}
+
+async function installClaudeCodeHooks(cwd: string) {
   const claudeSettingsDir = join(cwd, ".claude");
   if (!existsSync(claudeSettingsDir)) {
     mkdirSync(claudeSettingsDir, { recursive: true });
@@ -70,8 +87,48 @@ export async function installHooks() {
 
   await Bun.write(settingsPath, JSON.stringify(settings, null, 2));
   console.log("Updated .claude/settings.json");
+}
 
-  console.log("Installation complete!");
+async function installGeminiHooks() {
+  const homeDir = Bun.env.HOME;
+  if (!homeDir) {
+    console.warn("Could not determine HOME directory. Skipping Gemini hooks installation.");
+    return;
+  }
+
+  const geminiSettingsDir = join(homeDir, ".gemini");
+  if (!existsSync(geminiSettingsDir)) {
+    mkdirSync(geminiSettingsDir, { recursive: true });
+  }
+
+  const settingsPath = join(geminiSettingsDir, "settings.json");
+  let settings: any = {};
+  if (existsSync(settingsPath)) {
+    try {
+      settings = JSON.parse(await Bun.file(settingsPath).text());
+    } catch (e) {
+      console.warn("Could not parse existing ~/.gemini/settings.json, starting fresh.");
+    }
+  }
+
+  if (!settings.hooks) settings.hooks = {};
+
+  const events = ["SessionStart", "SessionEnd", "AfterAgent"];
+  const binInvocation = getBinInvocation();
+
+  for (const ev of events) {
+    settings.hooks[ev] = [
+      {
+        type: "command",
+        command: `${binInvocation} hook gemini`,
+        timeout: 5000,
+        name: "git-ai-dash"
+      }
+    ];
+  }
+
+  await Bun.write(settingsPath, JSON.stringify(settings, null, 2));
+  console.log("Updated ~/.gemini/settings.json");
 }
 
 async function installGitHook(hooksDir: string, hookName: string) {
