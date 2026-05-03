@@ -23,6 +23,7 @@ import {
   formatDate,
   firstUserMessage
 } from "../utils.ts";
+import { ContextTimeline } from "../components/ContextTimeline.tsx";
 
 interface DiffLine { type: 'context' | 'add' | 'remove'; content: string; }
 interface DiffHunk { header: string; oldStart: number; newStart: number; lines: DiffLine[]; }
@@ -323,7 +324,7 @@ const TokenHistogram: React.FC<{ turns: any[] }> = ({ turns }) => {
 
 const SessionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState<'transcript' | 'changes' | 'checkpoints' | 'plan'>('transcript');
+  const [activeTab, setActiveTab] = useState<'transcript' | 'changes' | 'checkpoints' | 'plan' | 'context'>('transcript');
   const [expandedTools, setExpandedTools] = useState<Record<number, boolean>>({});
   const [expandedGroups, setExpandedGroups] = useState<Record<number, boolean>>({});
   const [compactToolUses, setCompactToolUses] = useState(true);
@@ -486,6 +487,12 @@ const SessionDetail: React.FC = () => {
           onClick={() => setActiveTab('transcript')}
         >
           Transcript
+        </button>
+        <button
+          className={`session-tab${activeTab === 'context' ? ' active' : ''}`}
+          onClick={() => setActiveTab('context')}
+        >
+          Context
         </button>
         <button
           className={`session-tab${activeTab === 'changes' ? ' active' : ''}`}
@@ -691,6 +698,8 @@ const SessionDetail: React.FC = () => {
             </div>
           </aside>
         </div>
+      ) : activeTab === 'context' ? (
+        <ContextTimeline sessionId={id!} />
       ) : activeTab === 'changes' ? (
         <ChangesPanel sessionId={id!} />
       ) : (

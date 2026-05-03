@@ -136,6 +136,35 @@ export class SessionService {
     return session;
   }
 
+  async getSessionContext(id: string) {
+    const session = this.dashRepo.getSession(id);
+    if (!session) return null;
+
+    const events = this.dashRepo.getSessionEvents(id);
+    const context: any[] = [];
+
+    for (const event of events) {
+      if (event.type === "PostToolUse") {
+        try {
+          const payload = JSON.parse(event.payload_json);
+          // Skip ExitPlanMode as it's handled separately in the UI
+          if (payload.tool_name === "ExitPlanMode") continue;
+
+          context.push({
+            tool: payload.tool_name,
+            input: payload.tool_input,
+            output: payload.tool_response,
+            ts: event.ts,
+          });
+        } catch (e) {
+          console.error("Failed to parse event payload for context:", e);
+        }
+      }
+    }
+
+    return context;
+  }
+
   async getSessionCheckpointsDetail(id: string) {
     const session = this.dashRepo.getSession(id);
     if (!session) return null;

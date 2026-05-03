@@ -42,13 +42,15 @@ export class HookService {
     // Record Event
     const nextSeq = this.repository.getNextEventSeq(session_id);
 
+    const processedPayload = this.truncatePayload(payload);
+
     this.repository.insertEvent({
       id: randomUUID(),
       session_id,
       seq: nextSeq,
       ts: new Date().toISOString(),
       type: hook_event_name,
-      payload_json: JSON.stringify(payload),
+      payload_json: JSON.stringify(processedPayload),
       token_usage_json: null
     });
 
@@ -195,5 +197,31 @@ export class HookService {
     }
 
     console.log(`Reconciled ${activeSessions.length} sessions for commit ${headSha.slice(0, 7)}`);
+  }
+
+  private truncatePayload(payload: any): any {
+    if (!payload || typeof payload !== "object") return payload;
+
+    const MAX_SIZE = 50000;
+    const TRUNCATED_MSG = "... (truncated)";
+
+    const truncate = (val: any): any => {
+      if (typeof val === "string" && val.length > MAX_SIZE) {
+        return val.slice(0, MAX_SIZE) + TRUNCATED_MSG;
+      }
+      if (Array.isArray(val)) {
+        return val.map(truncate);
+      }
+      if (val !== null && typeof val === "object") {
+        const result: any = {};
+        for (const key in val) {
+          result[key] = truncate(val[key]);
+        }
+        return result;
+      }
+      return val;
+    };
+
+    return truncate(payload);
   }
 }

@@ -49,5 +49,12 @@ export function createSessionRoutes(sessionService: SessionService) {
     return c.json(diff);
   });
 
+  app.get("/:id/context", async (c) => {
+    const id = c.req.param("id");
+    const context = await sessionService.getSessionContext(id);
+    if (!context) return c.json({ error: "Session not found" }, 404);
+    return c.json(context);
+  });
+
   return app;
 }
