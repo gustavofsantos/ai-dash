@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.6",
+  "checkpoint_id": "0282446f7fb9",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/client/components/ContextTimeline.tsx",
+    "src/client/pages/SessionDetail.tsx",
+    "src/client/styles/global.css",
+    "src/server/routes/sessions.ts",
+    "src/server/services/hook.service.ts",
+    "src/server/services/session.service.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/02/82446f7fb9/0/metadata.json",
+      "transcript": "/02/82446f7fb9/0/full.jsonl",
+      "content_hash": "/02/82446f7fb9/0/content_hash.txt",
+      "prompt": "/02/82446f7fb9/0/prompt.txt"
+    }
+  ]
+}

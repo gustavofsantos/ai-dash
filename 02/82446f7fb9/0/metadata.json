@@ -1,0 +1,51 @@
+{
+  "cli_version": "0.5.6",
+  "checkpoint_id": "0282446f7fb9",
+  "session_id": "496e6811-2986-4656-965c-1c7ed3007788",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-03T16:50:44.615593141Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "src/client/components/ContextTimeline.tsx",
+    "src/client/pages/SessionDetail.tsx",
+    "src/client/styles/global.css",
+    "src/server/routes/sessions.ts",
+    "src/server/services/hook.service.ts",
+    "src/server/services/session.service.ts"
+  ],
+  "agent": "Gemini CLI",
+  "model": "gemini-3-flash-preview",
+  "turn_id": "036e8b41df91",
+  "session_metrics": {
+    "turn_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-03T16:50:44.600054798Z",
+    "agent_lines": 329,
+    "agent_removed": 2,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 329,
+    "total_lines_changed": 331,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 329,
+      "agent_lines_removed": 2
+    }
+  ]
+}

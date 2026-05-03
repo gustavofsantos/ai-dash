@@ -1,0 +1,25 @@
+lets run some spikes to answer the open questions for the issue 008
+
+---
+
+do not use `qmd`
+
+---
+
+about the remaining open questions, the size bucket of 50kb seems reasonable, stick to it. About the filtering, this is a personal tool without any cloud backup. I don't want to touch the complexities of sanitization for now. We are still getting ready to the first version.
+
+---
+
+Para os testes, vamos usar dados já coletados para termos consistência sobre o que existe e o que o teste exercita. Faça uma validação consultando o banco de dados da aplicação e inclua mais detalhamentos nas descrições de cada task. Use /user-story-planner para ajudar a organizar o planejamento.
+
+---
+
+O banco da aplicação está em ~/.git-ai-dash/db. Não escreva neste banco, leituras apenas
+
+---
+
+Faz sentido, atualize a issue com o detalhamento
+
+---
+
+seems complete, mark the issue as done
