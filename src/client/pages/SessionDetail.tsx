@@ -426,14 +426,6 @@ const SessionDetail: React.FC = () => {
           Checkpoints
           {session.checkpoint_count > 0 && <span className="tab-badge">{session.checkpoint_count}</span>}
         </button>
-        {session.plan && (
-          <button
-            className={`session-tab${activeTab === 'plan' ? ' active' : ''}`}
-            onClick={() => setActiveTab('plan')}
-          >
-            Plan
-          </button>
-        )}
       </div>
 
       {activeTab === 'transcript' ? (
@@ -450,6 +442,26 @@ const SessionDetail: React.FC = () => {
                       <div className="message-card">
                         <div className="message-header">
                           <span>User</span>
+                          <span>{gm.timestamp ? new Date(gm.timestamp).toLocaleTimeString() : ""}</span>
+                        </div>
+                        <div className="message-text">
+                          <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]}>{gm.text}</ReactMarkdown>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              if (gm.type === "plan") {
+                return (
+                  <div className="timeline-item" key={idx}>
+                    <div className="timeline-dot">
+                      <FileCode size={18} color="var(--tertiary)" />
+                    </div>
+                    <div className="timeline-content">
+                      <div className="message-card" style={{ background: "var(--surface-container)", borderColor: "var(--outline)" }}>
+                        <div className="message-header">
+                          <span style={{ color: "var(--tertiary)", fontWeight: 600 }}>Plan</span>
                           <span>{gm.timestamp ? new Date(gm.timestamp).toLocaleTimeString() : ""}</span>
                         </div>
                         <div className="message-text">
@@ -600,29 +612,6 @@ const SessionDetail: React.FC = () => {
         </div>
       ) : activeTab === 'changes' ? (
         <ChangesPanel sessionId={id!} />
-      ) : activeTab === 'plan' ? (
-        <div className="session-detail-layout">
-          <div className="timeline" style={{ maxWidth: 760 }}>
-            <div className="message-card" style={{ padding: "24px 32px" }}>
-              <ReactMarkdown remarkPlugins={[[remarkGfm, { singleTilde: false }]]}>{session.plan}</ReactMarkdown>
-            </div>
-            {session.allowed_prompts?.length > 0 && (
-              <div style={{ marginTop: 24 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "var(--on-surface-variant)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>
-                  Allowed prompts
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {session.allowed_prompts.map((p: any, i: number) => (
-                    <div key={i} style={{ display: "flex", gap: 12, padding: "8px 12px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 6, fontSize: 13 }}>
-                      <span style={{ color: "var(--primary)", fontFamily: "monospace", minWidth: 60 }}>{p.tool}</span>
-                      <span style={{ color: "var(--on-surface-variant)" }}>{p.prompt}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
       ) : (
         <CheckpointsPanel sessionId={id!} />
       )}

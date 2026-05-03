@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 
 export interface Message {
-  type: "user" | "assistant" | "tool_use";
+  type: "user" | "assistant" | "tool_use" | "plan";
   text?: string;
   name?: string;
   input?: any;
@@ -77,6 +77,19 @@ export function dashEventsToMessages(
           input: p.tool_input || p.input,
           timestamp: ts,
         });
+        break;
+
+      case "PostToolUse":
+        if (p.tool_name === "ExitPlanMode") {
+          const plan = p.tool_response?.plan || p.tool_input?.plan;
+          if (plan) {
+            messages.push({
+              type: "plan",
+              text: plan,
+              timestamp: ts,
+            });
+          }
+        }
         break;
 
       case "Stop":

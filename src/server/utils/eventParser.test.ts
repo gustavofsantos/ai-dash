@@ -42,4 +42,30 @@ describe("eventParser", () => {
     expect(messages[0].text).toBe("from transcript");
     expect(messages[1].text).toBe("response");
   });
+
+  test("should parse plan from ExitPlanMode event", () => {
+    const events = [
+      {
+        type: "PostToolUse",
+        ts: 300,
+        payload: {
+          tool_name: "ExitPlanMode",
+          tool_response: { plan: "This is the plan" }
+        }
+      }
+    ];
+
+    const fsMock = {
+      existsSync: () => false,
+      readFileSync: () => "",
+    };
+
+    const messages = dashEventsToMessages(events, fsMock as any);
+    expect(messages).toHaveLength(1);
+    expect(messages[0]).toEqual({
+      type: "plan",
+      text: "This is the plan",
+      timestamp: 300
+    });
+  });
 });
