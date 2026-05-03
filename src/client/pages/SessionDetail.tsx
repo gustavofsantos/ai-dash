@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from 'remark-gfm'
+import { PatchDiff } from "@pierre/diffs/react";
 import {
   User,
   Bot,
@@ -27,16 +28,14 @@ import { ContextTimeline } from "../components/ContextTimeline.tsx";
 
 interface DiffLine { type: 'context' | 'add' | 'remove'; content: string; }
 interface DiffHunk { header: string; oldStart: number; newStart: number; lines: DiffLine[]; }
-interface DiffFile { path: string; status: 'M' | 'A' | 'D' | 'R'; binary: boolean; additions: number; deletions: number; hunks: DiffHunk[]; }
+interface DiffFile { path: string; status: 'M' | 'A' | 'D' | 'R'; binary: boolean; additions: number; deletions: number; hunks: DiffHunk[]; raw: string; }
 interface DiffData { files: DiffFile[]; }
 
 const DiffViewer: React.FC<{ file: DiffFile }> = ({ file }) => {
   if (file.binary) {
     return <div className="diff-empty">Binary file — diff not shown.</div>;
   }
-  if (!file.hunks.length) {
-    return <div className="diff-empty">No changes to display.</div>;
-  }
+  
   return (
     <div className="diff-viewer">
       <div className="diff-file-header">
@@ -46,33 +45,15 @@ const DiffViewer: React.FC<{ file: DiffFile }> = ({ file }) => {
           {file.deletions > 0 && <span className="stat-del">-{file.deletions}</span>}
         </div>
       </div>
-      {file.hunks.map((hunk, hi) => {
-        let oldLine = hunk.oldStart;
-        let newLine = hunk.newStart;
-        return (
-          <div key={hi}>
-            <div className="diff-hunk-header">{hunk.header}</div>
-            <table className="diff-table">
-              <tbody>
-                {hunk.lines.map((line, li) => {
-                  const ol = line.type !== 'add' ? oldLine : undefined;
-                  const nl = line.type !== 'remove' ? newLine : undefined;
-                  if (line.type !== 'add') oldLine++;
-                  if (line.type !== 'remove') newLine++;
-                  return (
-                    <tr key={li} className={`diff-line diff-line-${line.type}`}>
-                      <td className="diff-line-num">{ol ?? ''}</td>
-                      <td className="diff-line-num">{nl ?? ''}</td>
-                      <td className="diff-line-marker">{line.type === 'add' ? '+' : line.type === 'remove' ? '-' : ' '}</td>
-                      <td className="diff-line-content">{line.content || ' '}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        );
-      })}
+      <div className="pierre-diff-container">
+        <PatchDiff 
+          patch={file.raw} 
+          options={{
+            theme: { dark: 'pierre-dark', light: 'pierre-light' },
+            themeType: 'system',
+          }}
+        />
+      </div>
     </div>
   );
 };

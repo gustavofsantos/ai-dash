@@ -17,6 +17,7 @@ export interface ParsedDiffFile {
   additions: number;
   deletions: number;
   hunks: ParsedDiffHunk[];
+  raw: string;
 }
 
 export function parseDiff(raw: string): { files: ParsedDiffFile[] } {
@@ -25,8 +26,13 @@ export function parseDiff(raw: string): { files: ParsedDiffFile[] } {
 
   for (const section of sections) {
     const lines = section.split("\n");
-    const pathMatch = lines[0].match(/diff --git a\/.+ b\/(.+)/);
-    if (!pathMatch) continue;
+    if (lines.length === 0) continue;
+
+    const firstLine = lines[0];
+    if (!firstLine) continue;
+
+    const pathMatch = firstLine.match(/diff --git a\/.+ b\/(.+)/);
+    if (!pathMatch || !pathMatch[1]) continue;
 
     let path = pathMatch[1];
     let status: "M" | "A" | "D" | "R" = "M";
@@ -38,6 +44,8 @@ export function parseDiff(raw: string): { files: ParsedDiffFile[] } {
 
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
+      if (!line) continue;
+
       if (line.startsWith("new file mode")) {
         status = "A";
       } else if (line.startsWith("deleted file mode")) {
@@ -51,8 +59,8 @@ export function parseDiff(raw: string): { files: ParsedDiffFile[] } {
         const m = line.match(/@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@/);
         currentHunk = {
           header: line,
-          oldStart: m ? parseInt(m[1]) : 0,
-          newStart: m ? parseInt(m[2]) : 0,
+          oldStart: m?.[1] ? parseInt(m[1]) : 0,
+          newStart: m?.[2] ? parseInt(m[2]) : 0,
           lines: [],
         };
         hunks.push(currentHunk);
@@ -69,7 +77,7 @@ export function parseDiff(raw: string): { files: ParsedDiffFile[] } {
       }
     }
 
-    files.push({ path, status, binary, additions, deletions, hunks });
+    files.push({ path, status, binary, additions, deletions, hunks, raw: section });
   }
 
   return { files };
