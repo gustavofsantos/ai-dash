@@ -1,54 +1,113 @@
-import { dashDb } from "../server/data/dash.db.ts";
-import { DashRepository } from "../server/data/dash.repository.ts";
-import { HookService } from "../server/services/hook.service.ts";
-import { AttributionService } from "../server/services/attribution.service.ts";
+import { randomUUID } from "node:crypto";
+import type { Envelope } from "../types/envelope.ts";
 
-const repository = new DashRepository(dashDb);
-const attributionService = new AttributionService();
-const hookService = new HookService(repository, attributionService);
+const DAEMON_URL = `http://localhost:${process.env.PORT ?? 3333}/collect`;
+const DAEMON_TIMEOUT_MS = 2000;
 
 export async function handleHook(args: string[]) {
-  const tool = args[0]; // e.g., "claude-code" or "git"
+  const agent = args[0] as "claude-code" | "gemini" | "git";
   const eventName = args[1];
+  const cwd = process.cwd();
 
-  if (tool === "git") {
-    if (eventName === "post-commit") {
-      await hookService.handleGitPostCommit(process.cwd());
-    } else if (eventName === "prepare-commit-msg") {
-      await hookService.handleGitPrepareCommitMsg(process.cwd(), args.slice(2));
-    }
+  if (agent === "git") {
+    await sendEnvelope(agent, eventName, {}, cwd, args.slice(2));
     return;
   }
 
   const rawInput = await Bun.stdin.text();
   if (!rawInput) {
-    // For Gemini hooks: return allow by default if no input
     console.log(JSON.stringify({ allow: true }));
     return;
   }
 
-  let payload: any;
+  let payload: unknown;
   try {
     payload = JSON.parse(rawInput);
-  } catch (e) {
-    // For Gemini hooks: return allow on parse error (don't block)
+  } catch {
     console.log(JSON.stringify({ allow: true }));
     return;
   }
 
   if (!payload || typeof payload !== "object") {
-    // For Gemini hooks: return allow on invalid payload (don't block)
     console.log(JSON.stringify({ allow: true }));
     return;
   }
 
+  await sendEnvelope(agent, eventName, payload, cwd);
+
+  console.log(JSON.stringify({ allow: true }));
+}
+
+async function sendEnvelope(
+  agent: "claude-code" | "gemini" | "git",
+  event: string,
+  payload: unknown,
+  cwd: string,
+  gitArgs?: string[]
+): Promise<void> {
+  const envelope: Envelope = {
+    id: randomUUID(),
+    source: {
+      agent,
+      event,
+      sessionId: (payload as any)?.session_id,
+      repoDirPath: cwd,
+      cwd: (payload as any)?.cwd ?? cwd,
+      timestamp: new Date().toISOString(),
+    },
+    payload: agent === "git" ? buildGitPayload(event, cwd, gitArgs ?? []) : payload,
+  };
+
+  const sent = await tryPostToDaemon(envelope);
+  if (!sent) {
+    await fallbackDirect(envelope, cwd, gitArgs);
+  }
+}
+
+async function tryPostToDaemon(envelope: Envelope): Promise<boolean> {
   try {
-    await hookService.handleHookEvent(tool, payload);
-  } catch (e) {
-    console.error(`Hook processing error: ${e}`, { stderr: true });
+    const res = await fetch(DAEMON_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(envelope),
+      signal: AbortSignal.timeout(DAEMON_TIMEOUT_MS),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function fallbackDirect(envelope: Envelope, cwd: string, gitArgs?: string[]): Promise<void> {
+  const { dashDb } = await import("../server/data/dash.db.ts");
+  const { DashRepository } = await import("../server/data/dash.repository.ts");
+  const { HookService } = await import("../server/services/hook.service.ts");
+  const { AttributionService } = await import("../server/services/attribution.service.ts");
+
+  const hookService = new HookService(new DashRepository(dashDb), new AttributionService());
+  const { agent, event } = envelope.source;
+
+  if (agent === "git") {
+    if (event === "post-commit") {
+      await hookService.handleGitPostCommit(cwd);
+    } else if (event === "prepare-commit-msg" && gitArgs?.length) {
+      await hookService.handleGitPrepareCommitMsg(cwd, gitArgs);
+    }
+    return;
   }
 
-  // For Gemini hooks: always return allow after processing
-  // This tells Gemini CLI to continue normally
-  console.log(JSON.stringify({ allow: true }));
+  await hookService.handleHookEvent(agent, envelope.payload);
+}
+
+function buildGitPayload(event: string, cwd: string, gitArgs: string[]): Record<string, unknown> {
+  if (event === "prepare-commit-msg") {
+    return {
+      GIT_DIR: `${cwd}/.git`,
+      GIT_WORK_TREE: cwd,
+      commit_msg_file: gitArgs[0] ?? "",
+      commit_source: gitArgs[1] ?? "",
+      sha1: gitArgs[2] ?? "",
+    };
+  }
+  return { GIT_DIR: `${cwd}/.git`, GIT_WORK_TREE: cwd };
 }

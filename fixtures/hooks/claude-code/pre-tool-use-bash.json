@@ -1,0 +1,10 @@
+{
+  "session_id": "cc-session-abc123",
+  "cwd": "/projects/myapp",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Bash",
+  "tool_input": {
+    "command": "bun test --bail",
+    "description": "Run tests"
+  }
+}

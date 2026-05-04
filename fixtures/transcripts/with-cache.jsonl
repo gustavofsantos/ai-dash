@@ -1,0 +1,2 @@
+{"timestamp":1000,"type":"user","message":{"role":"user","content":"Analyze the codebase"}}
+{"timestamp":1001,"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"I'll analyze the codebase."}],"usage":{"input_tokens":3,"output_tokens":255,"cache_creation_input_tokens":5887,"cache_read_input_tokens":10580}}}

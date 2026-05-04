@@ -1,0 +1,4 @@
+not valid json {{{
+{"timestamp":1000,"type":"user","message":{"role":"user","content":"hello"}}
+{"broken":
+{"timestamp":1001,"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"hi"}],"usage":{"input_tokens":10,"output_tokens":20}}}

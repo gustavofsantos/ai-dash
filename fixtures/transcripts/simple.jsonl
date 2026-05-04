@@ -1,0 +1,2 @@
+{"timestamp":1000,"type":"user","message":{"role":"user","content":"from transcript"}}
+{"timestamp":1001,"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"response"}],"usage":{"input_tokens":100,"output_tokens":200}}}

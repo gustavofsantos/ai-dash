@@ -1,0 +1,7 @@
+{
+  "session_id": "cc-session-abc123",
+  "cwd": "/projects/myapp",
+  "hook_event_name": "Stop",
+  "transcript_path": "/Users/user/.claude/projects/-projects-myapp/cc-session-abc123.jsonl",
+  "last_assistant_message": "I've completed the refactoring. All tests pass."
+}

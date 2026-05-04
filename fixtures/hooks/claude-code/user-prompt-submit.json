@@ -1,0 +1,6 @@
+{
+  "session_id": "cc-session-abc123",
+  "cwd": "/projects/myapp",
+  "hook_event_name": "UserPromptSubmit",
+  "text": "refactor the authentication module"
+}

@@ -1,0 +1,10 @@
+{
+  "session_id": "cc-session-abc123",
+  "cwd": "/projects/myapp",
+  "hook_event_name": "PreToolUse",
+  "tool_name": "Write",
+  "tool_input": {
+    "file_path": "/projects/myapp/src/auth.ts",
+    "content": "export function authenticate(token: string): boolean {\n  return token.length > 0;\n}"
+  }
+}
