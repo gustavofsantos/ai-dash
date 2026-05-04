@@ -1,0 +1,12 @@
+{
+  "session_id": "cc-session-abc123",
+  "cwd": "/projects/myapp",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "Read",
+  "tool_input": {
+    "file_path": "/projects/myapp/src/auth.ts"
+  },
+  "tool_response": {
+    "content": "file contents here"
+  }
+}

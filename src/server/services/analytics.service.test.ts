@@ -3,6 +3,7 @@ import { Database } from "bun:sqlite";
 import { runMigrations } from "../data/migrations.ts";
 import { DashRepository } from "../data/dash.repository.ts";
 import { AnalyticsService } from "./analytics.service.ts";
+import { seedDb } from "../../../fixtures/loader.ts";
 
 function makeDb() {
   const db = new Database(":memory:");
@@ -25,8 +26,8 @@ describe("AnalyticsService.getStats", () => {
 
   test("counts all sessions and distinct projects", () => {
     const db = makeDb();
-    db.run("INSERT INTO repos (id, path) VALUES ('r1', '/a'), ('r2', '/b')");
-    db.run("INSERT INTO sessions (id, repo_id, agent, started_at, state) VALUES ('s1', 'r1', 'claude-code', '2024-01-01 10:00:00', 'active'), ('s2', 'r2', 'claude-code', '2024-01-01 11:00:00', 'active'), ('s3', 'r1', 'claude-code', '2024-01-02 10:00:00', 'active')");
+    // multi-session: 2 repos (r1, r2), 3 sessions (s1+s2 in r1, s3 in r2)
+    seedDb(db, "multi-session");
     const stats = makeService(db).getStats();
     expect(stats.total_sessions).toBe(3);
     expect(stats.total_projects).toBe(2);
@@ -34,10 +35,10 @@ describe("AnalyticsService.getStats", () => {
 
   test("sums ai_additions across all checkpoints", () => {
     const db = makeDb();
-    db.run("INSERT INTO repos (id, path) VALUES ('r1', '/a')");
-    db.run("INSERT INTO checkpoints (id, repo_id, commit_sha, strategy, attribution_json) VALUES ('c1', 'r1', 'sha1', 'manual', '{\"ai_additions\":10,\"ai_deletions\":2,\"human_additions\":3,\"human_deletions\":1}'), ('c2', 'r1', 'sha2', 'manual', '{\"ai_additions\":5,\"ai_deletions\":1,\"human_additions\":0,\"human_deletions\":2}')");
+    // analytics-dataset: cp1.ai_additions=10, cp2.ai_additions=5 → 15
+    seedDb(db, "analytics-dataset");
     const stats = makeService(db).getStats();
-    expect(stats.total_ai_lines).toBe(15); // 10 + 5
+    expect(stats.total_ai_lines).toBe(15);
   });
 
   test("calculates total_accepted as sum of (ai_additions - human_deletions) per checkpoint", () => {
@@ -56,7 +57,7 @@ describe("AnalyticsService.getStats", () => {
     db.run("INSERT INTO checkpoints (id, repo_id, commit_sha, strategy, attribution_json) VALUES ('c1', 'r1', 'sha1', 'manual', '{\"ai_additions\":7}')");
     const stats = makeService(db).getStats();
     expect(stats.total_ai_lines).toBe(7);
-    expect(stats.total_accepted).toBe(7); // ai_additions - human_deletions(0)
+    expect(stats.total_accepted).toBe(7);
   });
 
   test("skips malformed attribution_json without throwing", () => {
@@ -64,7 +65,7 @@ describe("AnalyticsService.getStats", () => {
     db.run("INSERT INTO repos (id, path) VALUES ('r1', '/a')");
     db.run("INSERT INTO checkpoints (id, repo_id, commit_sha, strategy, attribution_json) VALUES ('c1', 'r1', 'sha1', 'manual', 'not-valid-json'), ('c2', 'r1', 'sha2', 'manual', '{\"ai_additions\":8}')");
     const stats = makeService(db).getStats();
-    expect(stats.total_ai_lines).toBe(8); // only the valid checkpoint counted
+    expect(stats.total_ai_lines).toBe(8);
   });
 });
 
@@ -75,7 +76,8 @@ describe("AnalyticsService.getProjectStats", () => {
 
   test("returns one entry per repo with correct project path", () => {
     const db = makeDb();
-    db.run("INSERT INTO repos (id, path) VALUES ('r1', '/projects/alpha'), ('r2', '/projects/beta')");
+    // multi-session: repos at /projects/alpha and /projects/beta
+    seedDb(db, "multi-session");
     const stats = makeService(db).getProjectStats();
     expect(stats).toHaveLength(2);
     const paths = stats.map((s: any) => s.project);
@@ -85,11 +87,11 @@ describe("AnalyticsService.getProjectStats", () => {
 
   test("returns correct session count per repo", () => {
     const db = makeDb();
-    db.run("INSERT INTO repos (id, path) VALUES ('r1', '/a'), ('r2', '/b')");
-    db.run("INSERT INTO sessions (id, repo_id, agent, started_at, state) VALUES ('s1', 'r1', 'agent', '2024-01-01', 'active'), ('s2', 'r1', 'agent', '2024-01-02', 'active'), ('s3', 'r2', 'agent', '2024-01-01', 'active')");
+    // multi-session: r1 has s1+s2 (2 sessions), r2 has s3 (1 session)
+    seedDb(db, "multi-session");
     const stats = makeService(db).getProjectStats();
-    const r1 = stats.find((s: any) => s.project === "/a");
-    const r2 = stats.find((s: any) => s.project === "/b");
+    const r1 = stats.find((s: any) => s.project === "/projects/alpha");
+    const r2 = stats.find((s: any) => s.project === "/projects/beta");
     expect(r1?.sessions).toBe(2);
     expect(r2?.sessions).toBe(1);
   });
@@ -101,7 +103,7 @@ describe("AnalyticsService.getProjectStats", () => {
     const stats = makeService(db).getProjectStats();
     const r1 = stats.find((s: any) => s.project === "/a");
     const r2 = stats.find((s: any) => s.project === "/b");
-    expect(r1?.ai_lines).toBe(15); // 10 + 5
+    expect(r1?.ai_lines).toBe(15);
     expect(r2?.ai_lines).toBe(30);
   });
 
@@ -120,15 +122,14 @@ describe("AnalyticsService.getActivityByDay", () => {
 
   test("groups sessions by calendar date", () => {
     const db = makeDb();
-    db.run("INSERT INTO repos (id, path) VALUES ('r1', '/a')");
-    // Two sessions on Jan 1, one on Jan 2
-    db.run("INSERT INTO sessions (id, repo_id, agent, started_at, state) VALUES ('s1', 'r1', 'agent', '2024-01-01 09:00:00', 'active'), ('s2', 'r1', 'agent', '2024-01-01 18:00:00', 'active'), ('s3', 'r1', 'agent', '2024-01-02 10:00:00', 'active')");
+    // analytics-dataset: s1+s2 on 2025-04-01, s3 on 2025-04-02
+    seedDb(db, "analytics-dataset");
     const activity = makeService(db).getActivityByDay() as any[];
     expect(activity).toHaveLength(2);
-    const jan1 = activity.find(a => a.date === "2024-01-01");
-    const jan2 = activity.find(a => a.date === "2024-01-02");
-    expect(jan1?.sessions).toBe(2);
-    expect(jan2?.sessions).toBe(1);
+    const day1 = activity.find(a => a.date === "2025-04-01");
+    const day2 = activity.find(a => a.date === "2025-04-02");
+    expect(day1?.sessions).toBe(2);
+    expect(day2?.sessions).toBe(1);
   });
 
   test("results are ordered by date ascending", () => {
@@ -150,16 +151,13 @@ describe("AnalyticsService.getTokenUsageByDay", () => {
 
   test("aggregates input, output, and cache tokens per day", () => {
     const db = makeDb();
-    db.run("INSERT INTO repos (id, path) VALUES ('r1', '/a')");
-    db.run(`INSERT INTO sessions (id, repo_id, agent, started_at, state, token_usage_json) VALUES
-      ('s1', 'r1', 'agent', '2024-01-01 10:00:00', 'active', '{"input_tokens":100,"output_tokens":50,"cache_creation_tokens":10,"cache_read_tokens":5}'),
-      ('s2', 'r1', 'agent', '2024-01-01 15:00:00', 'active', '{"input_tokens":200,"output_tokens":100,"cache_creation_tokens":20,"cache_read_tokens":10}')`);
+    // analytics-dataset: s1=(100,50,10,5) + s2=(200,100,20,10) both on 2025-04-01
+    seedDb(db, "analytics-dataset");
     const result = makeService(db).getTokenUsageByDay() as any[];
-    expect(result).toHaveLength(1);
-    expect(result[0].date).toBe("2024-01-01");
-    expect(result[0].input_tokens).toBe(300);
-    expect(result[0].output_tokens).toBe(150);
-    expect(result[0].cache_tokens).toBe(45); // (10+20) + (5+10)
+    const day1 = result.find(r => r.date === "2025-04-01");
+    expect(day1?.input_tokens).toBe(300);
+    expect(day1?.output_tokens).toBe(150);
+    expect(day1?.cache_tokens).toBe(45); // (10+20) + (5+10)
   });
 
   test("separates token counts across different days", () => {
@@ -191,8 +189,8 @@ describe("AnalyticsService.getFileChangesByDay", () => {
     const changes = makeService(db).getFileChangesByDay() as any[];
     expect(changes).toHaveLength(1);
     expect(changes[0].date).toBe("2024-01-01");
-    expect(changes[0].additions).toBe(20); // 15 + 5
-    expect(changes[0].deletions).toBe(4);  // 3 + 1
+    expect(changes[0].additions).toBe(20);
+    expect(changes[0].deletions).toBe(4);
   });
 
   test("separates file changes across different days", () => {
@@ -203,10 +201,8 @@ describe("AnalyticsService.getFileChangesByDay", () => {
     db.run("INSERT INTO checkpoint_sessions (checkpoint_id, session_id) VALUES ('c1', 's1'), ('c2', 's2')");
     const changes = makeService(db).getFileChangesByDay() as any[];
     expect(changes).toHaveLength(2);
-    const jan1 = changes.find(c => c.date === "2024-01-01");
-    const jan2 = changes.find(c => c.date === "2024-01-02");
-    expect(jan1?.additions).toBe(10);
-    expect(jan2?.additions).toBe(7);
+    expect(changes.find(c => c.date === "2024-01-01")?.additions).toBe(10);
+    expect(changes.find(c => c.date === "2024-01-02")?.additions).toBe(7);
   });
 
   test("excludes checkpoints without attribution_json", () => {
@@ -217,14 +213,15 @@ describe("AnalyticsService.getFileChangesByDay", () => {
     db.run("INSERT INTO checkpoint_sessions (checkpoint_id, session_id) VALUES ('c1', 's1'), ('c2', 's1')");
     const changes = makeService(db).getFileChangesByDay() as any[];
     expect(changes).toHaveLength(1);
-    expect(changes[0].additions).toBe(5); // only checkpoint with attribution counted
+    expect(changes[0].additions).toBe(5);
   });
 });
 
 describe("AnalyticsService.getRepositories", () => {
   test("returns array with one entry per repo", () => {
     const db = makeDb();
-    db.run("INSERT INTO repos (id, path) VALUES ('r1', '/a'), ('r2', '/b')");
+    // multi-session: 2 repos
+    seedDb(db, "multi-session");
     const repos = makeService(db).getRepositories() as any[];
     expect(repos).toHaveLength(2);
   });

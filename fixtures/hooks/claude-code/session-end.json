@@ -1,0 +1,6 @@
+{
+  "session_id": "cc-session-abc123",
+  "cwd": "/projects/myapp",
+  "hook_event_name": "SessionEnd",
+  "transcript_path": "/Users/user/.claude/projects/-projects-myapp/cc-session-abc123.jsonl"
+}

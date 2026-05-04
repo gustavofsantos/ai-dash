@@ -1,0 +1,15 @@
+{
+  "session_id": "cc-session-abc123",
+  "cwd": "/projects/myapp",
+  "hook_event_name": "PostToolUse",
+  "tool_name": "ExitPlanMode",
+  "tool_input": {},
+  "tool_response": {
+    "plan": "# Session Plan\n\n## Phase 1\n- Add JWT library\n- Configure middleware\n\n## Phase 2\n- Implement token validation\n- Add refresh token support",
+    "allowedPrompts": [
+      { "tool": "Bash", "prompt": "bun test" },
+      { "tool": "Edit", "prompt": "fix lint errors" }
+    ],
+    "filePath": "/tmp/plan.md"
+  }
+}
