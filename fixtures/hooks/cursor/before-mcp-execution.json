@@ -1,0 +1,13 @@
+{
+  "conversation_id": "cursor-conv-abc123",
+  "generation_id": "gen-890",
+  "model": "claude-opus-4-5",
+  "hook_event_name": "beforeMCPExecution",
+  "cursor_version": "1.7.2",
+  "workspace_roots": ["/projects/myapp"],
+  "user_email": "dev@example.com",
+  "transcript_path": null,
+  "tool_name": "filesystem",
+  "tool_input": "{\"path\": \"/projects/myapp/src/index.ts\"}",
+  "url": "http://localhost:3000"
+}

@@ -1,0 +1,17 @@
+{
+  "conversation_id": "cursor-conv-abc123",
+  "generation_id": "gen-567",
+  "model": "claude-opus-4-5",
+  "hook_event_name": "afterFileEdit",
+  "cursor_version": "1.7.2",
+  "workspace_roots": ["/projects/myapp"],
+  "user_email": "dev@example.com",
+  "transcript_path": null,
+  "file_path": "/projects/myapp/src/utils.ts",
+  "edits": [
+    {
+      "old_string": "export function add(a: number, b: number): number {\n  return a + b;\n}",
+      "new_string": "/**\n * Adds two numbers together.\n * @param a The first number\n * @param b The second number\n * @returns The sum of a and b\n */\nexport function add(a: number, b: number): number {\n  return a + b;\n}"
+    }
+  ]
+}

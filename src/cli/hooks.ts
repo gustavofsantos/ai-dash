@@ -5,7 +5,7 @@ const DAEMON_URL = `http://localhost:${process.env.PORT ?? 3333}/collect`;
 const DAEMON_TIMEOUT_MS = 2000;
 
 export async function handleHook(args: string[]) {
-  const agent = args[0] as "claude-code" | "gemini" | "git";
+  const agent = args[0] as "claude-code" | "gemini" | "cursor" | "git";
   const eventName = args[1];
   const cwd = process.cwd();
 
@@ -39,7 +39,7 @@ export async function handleHook(args: string[]) {
 }
 
 async function sendEnvelope(
-  agent: "claude-code" | "gemini" | "git",
+  agent: "claude-code" | "gemini" | "cursor" | "git",
   event: string,
   payload: unknown,
   cwd: string,

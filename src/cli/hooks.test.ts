@@ -188,4 +188,105 @@ describe("cli/hooks characterization", () => {
     expect(events).toHaveLength(1);
     expect(events[0].type).toBe("SessionEnd");
   });
+
+  test("should record a Cursor SessionStart event", async () => {
+    const sessionId = "cursor-session-start";
+    const payload = {
+      conversation_id: sessionId,
+      generation_id: "gen-123",
+      model: "claude-opus-4-5",
+      hook_event_name: "sessionStart",
+      cursor_version: "1.7.2",
+      workspace_roots: [testDir],
+      user_email: "test@example.com",
+      session_id: sessionId,
+      cwd: testDir,
+      is_background_agent: false,
+      composer_mode: "agent"
+    };
+
+    await hookService.handleHookEvent("cursor", payload);
+
+    const sessions = testDb.query("SELECT * FROM sessions WHERE id = ?").all(sessionId) as any[];
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].id).toBe(sessionId);
+    expect(sessions[0].agent).toBe("cursor");
+    expect(sessions[0].model).toBe("claude-opus-4-5");
+
+    const events = testDb.query("SELECT * FROM events WHERE session_id = ?").all(sessionId) as any[];
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("sessionStart");
+  });
+
+  test("should record a Cursor sessionEnd event", async () => {
+    const sessionId = "cursor-session-end";
+    const repoId = await getRepoId(testDir);
+
+    testDb.run("INSERT INTO repos (id, path) VALUES (?, ?)", [repoId, testDir]);
+    testDb.run(
+      "INSERT INTO sessions (id, repo_id, agent, started_at, state) VALUES (?, ?, ?, ?, ?)",
+      [sessionId, repoId, "cursor", new Date().toISOString(), "active"]
+    );
+
+    const payload = {
+      conversation_id: sessionId,
+      generation_id: "gen-456",
+      model: "claude-opus-4-5",
+      hook_event_name: "sessionEnd",
+      cursor_version: "1.7.2",
+      workspace_roots: [testDir],
+      session_id: sessionId,
+      cwd: testDir,
+      reason: "completed",
+      duration_ms: 5000,
+      is_background_agent: false
+    };
+
+    await hookService.handleHookEvent("cursor", payload);
+
+    const sessions = testDb.query("SELECT * FROM sessions WHERE id = ?").all(sessionId) as any[];
+    expect(sessions[0].state).toBe("ended");
+    expect(sessions[0].ended_at).not.toBeNull();
+
+    const events = testDb.query("SELECT * FROM events WHERE session_id = ?").all(sessionId) as any[];
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("sessionEnd");
+  });
+
+  test("should record Cursor afterFileEdit event", async () => {
+    const sessionId = "cursor-file-edit";
+    const repoId = await getRepoId(testDir);
+
+    testDb.run("INSERT INTO repos (id, path) VALUES (?, ?)", [repoId, testDir]);
+    testDb.run(
+      "INSERT INTO sessions (id, repo_id, agent, started_at, state) VALUES (?, ?, ?, ?, ?)",
+      [sessionId, repoId, "cursor", new Date().toISOString(), "active"]
+    );
+
+    const payload = {
+      conversation_id: sessionId,
+      generation_id: "gen-789",
+      model: "claude-opus-4-5",
+      hook_event_name: "afterFileEdit",
+      cursor_version: "1.7.2",
+      workspace_roots: [testDir],
+      session_id: sessionId,
+      cwd: testDir,
+      file_path: join(testDir, "test.ts"),
+      edits: [
+        {
+          old_string: "const x = 1",
+          new_string: "const x = 1; // AI edit"
+        }
+      ]
+    };
+
+    await hookService.handleHookEvent("cursor", payload);
+
+    const events = testDb.query("SELECT * FROM events WHERE session_id = ? AND type = ?").all(sessionId, "afterFileEdit") as any[];
+    expect(events).toHaveLength(1);
+    expect(events[0].type).toBe("afterFileEdit");
+    const eventPayload = JSON.parse(events[0].payload_json);
+    expect(eventPayload.file_path).toBe(join(testDir, "test.ts"));
+  });
 });

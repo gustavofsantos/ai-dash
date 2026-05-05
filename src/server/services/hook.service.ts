@@ -39,7 +39,9 @@ export class HookService {
     });
 
     // Update session info if this is a SessionStart event
-    if (hook_event_name === "SessionStart") {
+    // Normalize event name for comparison (handle both SessionStart and sessionStart)
+    const normalizedEventName = hook_event_name === "sessionStart" ? "SessionStart" : hook_event_name;
+    if (normalizedEventName === "SessionStart") {
       const updates: Record<string, any> = { agent: tool };
       if (tool !== "gemini") {
         // For Claude Code, set model to payload.model or "unknown"
@@ -90,7 +92,8 @@ export class HookService {
       }
     }
 
-    if (hook_event_name === "SessionEnd") {
+    // Handle SessionEnd (handles both SessionEnd and sessionEnd)
+    if (hook_event_name === "SessionEnd" || hook_event_name === "sessionEnd") {
       this.repository.updateSession(session_id, { state: "ended", ended_at: new Date().toISOString() });
       await this.updateSessionTokenUsageFromTranscript(session_id, payload.transcript_path);
     }

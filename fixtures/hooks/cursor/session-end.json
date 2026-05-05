@@ -1,0 +1,16 @@
+{
+  "conversation_id": "cursor-conv-abc123",
+  "generation_id": "gen-789",
+  "model": "claude-opus-4-5",
+  "hook_event_name": "sessionEnd",
+  "cursor_version": "1.7.2",
+  "workspace_roots": ["/projects/myapp"],
+  "user_email": "dev@example.com",
+  "transcript_path": "/Users/dev/.cursor/chats/fd9cb6513817291d5949d2931848220f/beb9b0de-876f-4eef-ab0d-f766a5798bcf/store.db",
+  "session_id": "cursor-session-start-001",
+  "cwd": "/projects/myapp",
+  "reason": "completed",
+  "duration_ms": 45000,
+  "is_background_agent": false,
+  "final_status": "completed"
+}

@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 const dir = import.meta.dir;
 
 export function loadHookPayload(
-  agent: "claude-code" | "gemini" | "git",
+  agent: "claude-code" | "gemini" | "git" | "cursor",
   event: string
 ): unknown {
   const path = join(dir, "hooks", agent, `${event}.json`);

@@ -1,0 +1,13 @@
+{
+  "conversation_id": "cursor-conv-abc123",
+  "generation_id": "gen-456",
+  "model": "claude-opus-4-5",
+  "hook_event_name": "beforeShellExecution",
+  "cursor_version": "1.7.2",
+  "workspace_roots": ["/projects/myapp"],
+  "user_email": "dev@example.com",
+  "transcript_path": null,
+  "command": "npm test",
+  "cwd": "/projects/myapp",
+  "sandbox": false
+}

@@ -1,5 +1,5 @@
 export interface EnvelopeSource {
-  agent: "claude-code" | "gemini" | "git";
+  agent: "claude-code" | "gemini" | "cursor" | "git";
   event: string;
   sessionId?: string;
   repoDirPath: string;

@@ -9,13 +9,14 @@ function getBinInvocation(): string {
     : resolve(process.argv[0]!);
 }
 
-export async function installHooks(options?: { claudeCode?: boolean; gemini?: boolean }) {
+export async function installHooks(options?: { claudeCode?: boolean; gemini?: boolean; cursor?: boolean }) {
   const cwd = process.cwd();
   console.log(`Installing git-ai-dash hooks in ${cwd}...`);
 
   // Default to all targets if no flags provided
   const installClaudeCode = options?.claudeCode ?? options === undefined;
   const installGemini = options?.gemini ?? options === undefined;
+  const installCursor = options?.cursor ?? options === undefined;
 
   // 1. Git Hooks (always installed)
   const hooksDir = join(cwd, ".git", "hooks");
@@ -35,6 +36,11 @@ export async function installHooks(options?: { claudeCode?: boolean; gemini?: bo
   // 3. Gemini Hooks
   if (installGemini) {
     await installGeminiHooks();
+  }
+
+  // 4. Cursor Hooks
+  if (installCursor) {
+    await installCursorHooks(cwd);
   }
 
   console.log("Installation complete!");
@@ -129,6 +135,92 @@ async function installGeminiHooks() {
 
   await Bun.write(settingsPath, JSON.stringify(settings, null, 2));
   console.log("Updated ~/.gemini/settings.json");
+}
+
+async function installCursorHooks(cwd: string) {
+  const cursorDir = join(cwd, ".cursor");
+  const hooksDir = join(cursorDir, "hooks");
+
+  if (!existsSync(cursorDir)) {
+    mkdirSync(cursorDir, { recursive: true });
+  }
+  if (!existsSync(hooksDir)) {
+    mkdirSync(hooksDir, { recursive: true });
+  }
+
+  // Create the hook script
+  const hookScriptPath = join(hooksDir, "ai-dash.sh");
+  const hookScript = `#!/bin/bash
+# Cursor hooks integration for ai-dash
+set -e
+
+HOOK_EVENT="\${1:-\${CURSOR_HOOK_EVENT:-}}"
+
+if [ -z "$HOOK_EVENT" ]; then
+  cat > /dev/null
+  exit 0
+fi
+
+PAYLOAD=\$(cat)
+
+if command -v ai-dash &> /dev/null; then
+  ai-dash cursor "$HOOK_EVENT" <<< "$PAYLOAD"
+elif [ -f "node_modules/.bin/ai-dash" ]; then
+  node_modules/.bin/ai-dash cursor "$HOOK_EVENT" <<< "$PAYLOAD"
+else
+  if command -v bun &> /dev/null; then
+    SCRIPT_DIR="$( cd "$( dirname "\${BASH_SOURCE[0]}" )" && pwd )"
+    PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
+    BUN_FILE="$PROJECT_ROOT/src/bin/ai-dash.ts"
+    
+    if [ -f "$BUN_FILE" ]; then
+      bun "$BUN_FILE" cursor "$HOOK_EVENT" <<< "$PAYLOAD"
+    fi
+  fi
+fi
+
+exit 0
+`;
+
+  await Bun.write(hookScriptPath, hookScript);
+  chmodSync(hookScriptPath, 0o755);
+
+  // Create the hooks.json configuration
+  const hooksJsonPath = join(cursorDir, "hooks.json");
+  const hooksJson = {
+    version: 1,
+    hooks: {
+      sessionStart: [{ command: ".cursor/hooks/ai-dash.sh sessionStart" }],
+      sessionEnd: [{ command: ".cursor/hooks/ai-dash.sh sessionEnd" }],
+      beforeShellExecution: [
+        { command: ".cursor/hooks/ai-dash.sh beforeShellExecution", timeout: 5 }
+      ],
+      afterShellExecution: [{ command: ".cursor/hooks/ai-dash.sh afterShellExecution" }],
+      afterFileEdit: [{ command: ".cursor/hooks/ai-dash.sh afterFileEdit" }],
+      stop: [{ command: ".cursor/hooks/ai-dash.sh stop" }]
+    }
+  };
+
+  if (existsSync(hooksJsonPath)) {
+    try {
+      const existing = JSON.parse(await Bun.file(hooksJsonPath).text());
+      // Merge hooks
+      if (existing.hooks) {
+        for (const [event, hooks] of Object.entries(hooksJson.hooks)) {
+          existing.hooks[event] = hooks;
+        }
+      }
+      await Bun.write(hooksJsonPath, JSON.stringify(existing, null, 2));
+      console.log("Updated .cursor/hooks.json");
+    } catch (e) {
+      console.warn("Could not parse existing .cursor/hooks.json, overwriting.");
+      await Bun.write(hooksJsonPath, JSON.stringify(hooksJson, null, 2));
+    }
+  } else {
+    await Bun.write(hooksJsonPath, JSON.stringify(hooksJson, null, 2));
+  }
+
+  console.log("Installed Cursor hooks in .cursor/");
 }
 
 async function installGitHook(hooksDir: string, hookName: string) {

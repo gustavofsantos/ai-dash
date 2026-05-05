@@ -1,0 +1,14 @@
+{
+  "conversation_id": "cursor-conv-abc123",
+  "generation_id": "gen-456",
+  "model": "claude-opus-4-5",
+  "hook_event_name": "sessionStart",
+  "cursor_version": "1.7.2",
+  "workspace_roots": ["/projects/myapp"],
+  "user_email": "dev@example.com",
+  "transcript_path": null,
+  "session_id": "cursor-session-start-001",
+  "cwd": "/projects/myapp",
+  "is_background_agent": false,
+  "composer_mode": "agent"
+}
